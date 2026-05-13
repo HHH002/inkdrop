@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #111111;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN',
+    'Noto Sans JP', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* スマホ向け最大幅 */
+#app-root {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  position: relative;
+}
+
+/* Safe area 対応 */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* スクロールバー非表示 */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
