@@ -27,19 +27,20 @@ export async function POST(request: Request) {
     const openai = new OpenAI({ apiKey })
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      max_tokens: 300,
+      model: 'o3',
+      max_completion_tokens: 500,
       messages: [
         {
           role: 'user',
           content: [
             {
               type: 'image_url',
-              image_url: { url: imageUrl, detail: 'low' },
+              image_url: { url: imageUrl, detail: 'high' },
             },
             {
               type: 'text',
-              text: `このデザイン画像を見て、Tシャツへの最適なプリント配置を提案してください。
+              text: `このデザイン画像を詳細に分析して、Tシャツへの最適なプリント配置を提案してください。
+デザインの形状・サイズ感・詳細さ・インパクトを考慮して判断してください。
 
 配置オプション：
 フロント:

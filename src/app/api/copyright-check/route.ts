@@ -17,19 +17,19 @@ export async function POST(request: Request) {
     const openai = new OpenAI({ apiKey })
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      max_tokens: 300,
+      model: 'o3',
+      max_completion_tokens: 500,
       messages: [
         {
           role: 'user',
           content: [
             {
               type: 'image_url',
-              image_url: { url: imageUrl, detail: 'low' },
+              image_url: { url: imageUrl, detail: 'high' },
             },
             {
               type: 'text',
-              text: `このデザイン画像を著作権の観点で審査してください。
+              text: `このデザイン画像を著作権の観点で厳密に審査してください。
 以下に該当する場合は rejected とします：
 - 有名キャラクター（アニメ・映画・ゲーム等）の明らかなコピー
 - ブランドロゴや商標の無断使用
