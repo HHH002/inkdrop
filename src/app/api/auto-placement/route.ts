@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     const openai = new OpenAI({ apiKey })
 
     const response = await openai.chat.completions.create({
-      model: 'o3',
+      model: 'gpt-5.5',
       max_completion_tokens: 500,
       messages: [
         {
