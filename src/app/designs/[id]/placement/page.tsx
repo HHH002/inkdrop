@@ -2,7 +2,7 @@
 
 import { useState, useRef, use } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, Sparkles } from 'lucide-react'
 import type { BodyType, ProductColor, Size } from '@/types'
 
 // ==============================
@@ -332,6 +332,36 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
   const [myLogoImage, setMyLogoImage] = useState<File | null>(null)
   const [myLogoPreview, setMyLogoPreview] = useState<string | null>(null)
 
+  // ---- AI自動配置 ----
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiReason, setAiReason] = useState<string | null>(null)
+
+  const designImageUrl = searchParams.get('image_url') ?? null
+
+  async function handleAutoPlacement() {
+    if (!designImageUrl) {
+      setAiReason('デザイン画像URLが見つかりません')
+      return
+    }
+    setAiLoading(true)
+    setAiReason(null)
+    try {
+      const res = await fetch('/api/auto-placement', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl: designImageUrl }),
+      })
+      const data = await res.json()
+      if (data.front) setSelectedFrontPlacement(data.front as FrontPlacement)
+      if (data.back) setSelectedBackPlacement(data.back as BackPlacement)
+      setAiReason(data.reason ?? '')
+    } catch {
+      setAiReason('AI解析に失敗しました')
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
   // ---- 計算値 ----
   const isDPlacementSelected = ['D1', 'D2', 'D3', 'D4'].includes(selectedBackPlacement)
   const shouldShowTextSettings = textEnabled || isDPlacementSelected
@@ -389,6 +419,30 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
       </header>
 
       <div className="px-4 py-5 space-y-6">
+
+        {/* ===== AI自動配置ボタン ===== */}
+        <button
+          onClick={handleAutoPlacement}
+          disabled={aiLoading || !designImageUrl}
+          className="w-full py-3.5 bg-gradient-to-r from-blue-500 to-violet-500 text-white text-sm font-semibold rounded-2xl disabled:opacity-40 flex items-center justify-center gap-2 shadow-sm"
+        >
+          {aiLoading ? (
+            <>
+              <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+              AI が配置を解析中...
+            </>
+          ) : (
+            <>
+              <Sparkles size={16} />
+              AIが最適な配置を自動提案
+            </>
+          )}
+        </button>
+        {aiReason && (
+          <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5 -mt-3">
+            <p className="text-xs text-blue-700 font-medium">✨ AI提案：{aiReason}</p>
+          </div>
+        )}
 
         {/* ===== フロントパターン ===== */}
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">

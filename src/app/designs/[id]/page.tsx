@@ -100,6 +100,9 @@ export default function DesignDetailPage({ params }: { params: Promise<{ id: str
       color,
       size,
     })
+    if (design?.transparent_image_url ?? design?.image_url) {
+      params.set('image_url', design.transparent_image_url ?? design.image_url)
+    }
     router.push(`/designs/${id}/placement?${params.toString()}`)
   }
 
