@@ -318,6 +318,27 @@ create trigger design_sales_summary_updated_at before update on public.design_sa
 create trigger product_prices_updated_at before update on public.product_prices
   for each row execute function public.handle_updated_at();
 
+-- auth.usersに新規ユーザー追加時にpublic.usersを自動作成
+create or replace function public.handle_auth_user_created()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.users (id, name, email, terms_accepted_at)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'name', new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
+    new.email,
+    now()
+  )
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_auth_user_created();
+
 -- 新規ユーザー登録時に creator_balances を自動作成
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer as $$
