@@ -15,19 +15,12 @@ import {
   COLOR_LABELS,
   COLOR_HEX,
   SIZE_LABELS,
-  PLACEMENT_LABELS,
-  PRINT_SIZE_LABELS,
-  CUSTOM_PLACEMENT_OPTIONS,
-  DEFAULT_PRICES,
   type Design,
   type BodyType,
   type ProductColor,
   type Size,
-  type Placement,
-  type PrintSize,
   type User,
 } from '@/types'
-import { formatPrice } from '@/lib/utils'
 
 const VIEWS = ['front', 'side', 'back'] as const
 type View = (typeof VIEWS)[number]
@@ -46,9 +39,6 @@ export default function DesignDetailPage({ params }: { params: Promise<{ id: str
   const [bodyType, setBodyType] = useState<BodyType | null>(null)
   const [color, setColor] = useState<ProductColor | null>(null)
   const [size, setSize] = useState<Size | null>(null)
-  const [placement, setPlacement] = useState<Placement | null>(null)
-  const [customSubOption, setCustomSubOption] = useState<string | null>(null)
-  const [printSize, setPrintSize] = useState<PrintSize | null>(null)
   const [viewIdx, setViewIdx] = useState(0)
   const view: View = VIEWS[viewIdx]
 
@@ -101,22 +91,16 @@ export default function DesignDetailPage({ params }: { params: Promise<{ id: str
   if (loading) return <LoadingSpinner className="py-32" />
   if (error || !design) return <ErrorScreen message="デザインが見つかりませんでした" onRetry={() => router.refresh()} />
 
-  const isReadyToPurchase = bodyType && color && size && placement && printSize && (placement !== 'custom' || customSubOption)
-  const basePrice = bodyType ? DEFAULT_PRICES[bodyType].price : 0
-  const customFee = placement === 'custom' ? 500 : 0 // TODO: カスタム配置の追加料金
-  const totalPrice = basePrice + customFee
+  const isReadyForPlacement = bodyType && color && size
 
-  const handleProceedToPreview = () => {
-    if (!isReadyToPurchase) return
+  const handleProceedToPlacement = () => {
+    if (!isReadyForPlacement) return
     const params = new URLSearchParams({
       body_type: bodyType,
       color,
       size,
-      placement,
-      print_size: printSize,
     })
-    if (placement === 'custom' && customSubOption) params.set('custom_option', customSubOption)
-    router.push(`/designs/${id}/preview?${params.toString()}`)
+    router.push(`/designs/${id}/placement?${params.toString()}`)
   }
 
   return (
@@ -147,8 +131,8 @@ export default function DesignDetailPage({ params }: { params: Promise<{ id: str
             designImageUrl={design.transparent_image_url ?? design.image_url}
             bodyType={bodyType}
             color={color}
-            placement={placement}
-            printSize={printSize}
+            placement={null}
+            printSize={null}
             view={view}
           />
         ) : (
@@ -181,8 +165,8 @@ export default function DesignDetailPage({ params }: { params: Promise<{ id: str
                   designImageUrl={design.transparent_image_url ?? design.image_url}
                   bodyType={bodyType}
                   color={color}
-                  placement={placement}
-                  printSize={printSize}
+                  placement={null}
+                  printSize={null}
                   view={v}
                 />
               </button>
@@ -283,80 +267,15 @@ export default function DesignDetailPage({ params }: { params: Promise<{ id: str
           </Section>
         )}
 
-        {/* 4. 配置 */}
-        {size && (
-          <Section title="4. プリント配置">
-            <div className="space-y-2">
-              {(Object.keys(PLACEMENT_LABELS) as Placement[]).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPlacement(p)}
-                  className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium border transition-colors ${
-                    placement === p ? 'border-black bg-black text-white' : 'border-gray-200 text-gray-700'
-                  }`}
-                >
-                  {PLACEMENT_LABELS[p]}
-                </button>
-              ))}
-            </div>
-
-            {/* カスタム時のサブ選択肢 */}
-            {placement === 'custom' && (
-              <div className="mt-3 p-3 bg-gray-50 rounded-xl">
-                <p className="text-xs text-gray-600 mb-2">カスタム配置を選んでください（+¥500）</p>
-                <div className="space-y-1.5">
-                  {CUSTOM_PLACEMENT_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.id}
-                      onClick={() => setCustomSubOption(opt.id)}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-colors ${
-                        customSubOption === opt.id ? 'bg-black text-white' : 'bg-white text-gray-700'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </Section>
-        )}
-
-        {/* 5. プリントサイズ */}
-        {placement && (placement !== 'custom' || customSubOption) && (
-          <Section title="5. プリントサイズ">
-            <div className="grid grid-cols-3 gap-2">
-              {(['small', 'medium', 'large'] as PrintSize[]).map((ps) => (
-                <button
-                  key={ps}
-                  onClick={() => setPrintSize(ps)}
-                  className={`py-3 rounded-xl text-sm font-medium border transition-colors ${
-                    printSize === ps ? 'border-black bg-black text-white' : 'border-gray-200 text-gray-700'
-                  }`}
-                >
-                  {PRINT_SIZE_LABELS[ps]}
-                </button>
-              ))}
-            </div>
-          </Section>
-        )}
-
-        {/* 6. 確認 + 購入 */}
-        {isReadyToPurchase && (
+        {/* 4. 配置選択へ */}
+        {isReadyForPlacement && (
           <div className="pt-4 border-t border-gray-100 space-y-3">
-            <div className="flex items-baseline justify-between">
-              <span className="text-sm text-gray-500">合計</span>
-              <span className="text-2xl font-bold">{formatPrice(totalPrice)}</span>
-            </div>
             <button
-              onClick={handleProceedToPreview}
-              className="w-full py-3.5 bg-black text-white text-sm font-semibold rounded-xl"
+              onClick={handleProceedToPlacement}
+              className="w-full py-3.5 bg-blue-500 text-white text-sm font-semibold rounded-xl"
             >
-              プレビューを確認して購入
+              次へ：配置選択
             </button>
-            <p className="text-[10px] text-gray-400 text-center">
-              注文後のキャンセル・返品はできません
-            </p>
           </div>
         )}
       </div>
