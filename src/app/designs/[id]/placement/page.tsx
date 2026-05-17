@@ -251,6 +251,8 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
   const [textContent,  setTextContent]  = useState('')
   const [fontStyle,    setFontStyle]    = useState<'gothic' | 'square' | 'mincho' | 'handwritten'>('gothic')
   const [fontSize,     setFontSize]     = useState<'large' | 'small'>('large')
+  const [textColor,    setTextColor]    = useState('#000000')
+  const [textOutline,  setTextOutline]  = useState<'none' | 'thin' | 'thick'>('none')
 
   const colorStr = color ?? 'white'
 
@@ -279,9 +281,11 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
     p.set('print_size', primary.print_size!)
     if (designImageUrl) p.set('image_url',  designImageUrl)
     if (textEnabled && textContent) {
-      p.set('text',      textContent)
-      p.set('font',      fontStyle)
-      p.set('font_size', fontSize)
+      p.set('text',         textContent)
+      p.set('font',         fontStyle)
+      p.set('font_size',    fontSize)
+      p.set('text_color',   textColor)
+      p.set('text_outline', textOutline)
     }
     if (textOpt?.id)    p.set('text_pattern', textOpt.id)
     router.push(`/designs/${id}/preview?${p.toString()}`)
@@ -443,7 +447,7 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
               </div>
 
               {/* 文字サイズ */}
-              <div className="px-4 pb-4">
+              <div className="px-4 pb-3 border-b border-gray-100">
                 <p className="text-xs font-semibold text-gray-500 mb-2">文字サイズ</p>
                 <div className="grid grid-cols-2 gap-2">
                   {(['large', 'small'] as const).map(s => (
@@ -457,6 +461,80 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
                       }`}
                     >
                       {s === 'large' ? '大' : '小'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 文字カラー */}
+              <div className="px-4 pt-3 pb-3 border-b border-gray-100">
+                <p className="text-xs font-semibold text-gray-500 mb-2.5">文字カラー</p>
+                <div className="flex flex-wrap gap-2.5">
+                  {[
+                    { hex: '#000000', label: '黒'  },
+                    { hex: '#FFFFFF', label: '白'  },
+                    { hex: '#EF4444', label: '赤'  },
+                    { hex: '#3B82F6', label: '青'  },
+                    { hex: '#1E3A8A', label: '紺'  },
+                    { hex: '#EAB308', label: '黄'  },
+                    { hex: '#22C55E', label: '緑'  },
+                    { hex: '#6B7280', label: 'グレー' },
+                  ].map(c => (
+                    <button
+                      key={c.hex}
+                      onClick={() => setTextColor(c.hex)}
+                      title={c.label}
+                      className={`w-9 h-9 rounded-full border-2 transition-all flex items-center justify-center ${
+                        textColor === c.hex
+                          ? 'border-blue-500 scale-110 shadow-md'
+                          : 'border-gray-200'
+                      } ${c.hex === '#FFFFFF' ? 'shadow-sm' : ''}`}
+                      style={{ backgroundColor: c.hex }}
+                    >
+                      {textColor === c.hex && (
+                        <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+                          <path d="M1 5L4.5 8.5L11 1.5" stroke={c.hex === '#FFFFFF' || c.hex === '#EAB308' ? '#374151' : 'white'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 文字のふち */}
+              <div className="px-4 pt-3 pb-4">
+                <p className="text-xs font-semibold text-gray-500 mb-2">文字のふち</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {([
+                    { id: 'none',  label: 'なし',   preview: 'A' },
+                    { id: 'thin',  label: '細ふち',  preview: 'A' },
+                    { id: 'thick', label: '太ふち',  preview: 'A' },
+                  ] as const).map(o => (
+                    <button
+                      key={o.id}
+                      onClick={() => setTextOutline(o.id)}
+                      className={`py-2.5 px-2 rounded-xl border-2 transition-all flex flex-col items-center gap-1 ${
+                        textOutline === o.id
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 bg-gray-50'
+                      }`}
+                    >
+                      <span
+                        className="text-lg font-black leading-none"
+                        style={{
+                          color: textColor,
+                          WebkitTextStroke:
+                            o.id === 'thin'  ? '1.5px #374151' :
+                            o.id === 'thick' ? '3px #374151'   : 'unset',
+                          textShadow: o.id === 'none' ? 'none' : undefined,
+                          backgroundColor: 'transparent',
+                        }}
+                      >
+                        {o.preview}
+                      </span>
+                      <span className={`text-[10px] font-medium ${textOutline === o.id ? 'text-blue-600' : 'text-gray-500'}`}>
+                        {o.label}
+                      </span>
                     </button>
                   ))}
                 </div>
