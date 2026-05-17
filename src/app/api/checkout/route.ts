@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { paymentProvider } from '@/lib/payment'
 import {
-  FIXED_PRICE,
+  BODY_TYPE_PRICES,
   BODY_TYPE_LABELS,
   type BodyType,
   type ProductColor,
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'sales_stopped' }, { status: 400 })
     }
 
-    const total = FIXED_PRICE
+    const total = BODY_TYPE_PRICES[body_type]
 
     // 注文レコードを事前作成
     const { data: order, error: oErr } = await supabase

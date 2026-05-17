@@ -9,8 +9,8 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { ErrorScreen } from '@/components/ui/ErrorScreen'
 import {
   BODY_TYPE_LABELS,
+  BODY_TYPE_PRICES,
   COLOR_LABELS,
-  FIXED_PRICE,
   type Design,
   type BodyType,
   type ProductColor,
@@ -132,7 +132,7 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
       <div className="px-5 pb-4 border-t border-gray-100 pt-4 space-y-2">
         <div className="flex justify-between text-sm">
           <span className="text-gray-500">商品代金</span>
-          <span>¥{FIXED_PRICE.toLocaleString()}</span>
+          <span>¥{BODY_TYPE_PRICES[body_type].toLocaleString()}</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-gray-500">送料</span>
@@ -140,7 +140,7 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
         </div>
         <div className="flex justify-between text-sm font-bold pt-1 border-t border-gray-100">
           <span>合計（税込）</span>
-          <span>¥{FIXED_PRICE.toLocaleString()}</span>
+          <span>¥{BODY_TYPE_PRICES[body_type].toLocaleString()}</span>
         </div>
       </div>
 
@@ -162,7 +162,7 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
           disabled={submitting}
           className="w-full py-4 bg-black text-white text-sm font-bold rounded-2xl disabled:opacity-50 tracking-wide"
         >
-          {submitting ? '決済画面へ移動中...' : `¥${FIXED_PRICE.toLocaleString()}　購入する`}
+          {submitting ? '決済画面へ移動中...' : `¥${BODY_TYPE_PRICES[body_type].toLocaleString()}　購入する`}
         </button>
       </div>
     </div>

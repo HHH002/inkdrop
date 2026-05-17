@@ -261,14 +261,18 @@ export interface ProductPrice {
   updated_at: string
 }
 
-export const FIXED_PRICE = 3300
+export const BODY_TYPE_PRICES: Record<BodyType, number> = {
+  tshirt:      3300,
+  long_sleeve: 5500,
+  sweatshirt:  8800,
+  hoodie:      11000,
+}
 
-// デフォルト価格（税込固定 ¥3,300）
 export const DEFAULT_PRICES: Record<BodyType, { price: number; creator_reward: number }> = {
-  tshirt: { price: FIXED_PRICE, creator_reward: 500 },
-  long_sleeve: { price: FIXED_PRICE, creator_reward: 500 },
-  hoodie: { price: FIXED_PRICE, creator_reward: 500 },
-  sweatshirt: { price: FIXED_PRICE, creator_reward: 500 },
+  tshirt:      { price: 3300,  creator_reward: 500 },
+  long_sleeve: { price: 5500,  creator_reward: 500 },
+  sweatshirt:  { price: 8800,  creator_reward: 500 },
+  hoodie:      { price: 11000, creator_reward: 500 },
 }
 
 // ==============================

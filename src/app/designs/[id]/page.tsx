@@ -15,7 +15,7 @@ import {
   COLOR_LABELS,
   COLOR_HEX,
   SIZE_LABELS,
-  FIXED_PRICE,
+  BODY_TYPE_PRICES,
   type Design,
   type BodyType,
   type ProductColor,
@@ -147,7 +147,7 @@ export default function DesignDetailPage({ params }: { params: Promise<{ id: str
         <div className="flex items-center justify-between">
           <h2 className="text-base font-bold">商品をカスタマイズ</h2>
           <span className="text-lg font-bold">
-            ¥{FIXED_PRICE.toLocaleString()}
+            ¥{(bodyType ? BODY_TYPE_PRICES[bodyType] : BODY_TYPE_PRICES.tshirt).toLocaleString()}
             <span className="text-xs font-normal text-gray-500 ml-1">税込</span>
           </span>
         </div>
