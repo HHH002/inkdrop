@@ -4,15 +4,13 @@ import { useState, useEffect, use } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { MockupPreview } from '@/components/design/MockupPreview'
+import { ProductMockup } from '@/components/design/ProductMockup'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { ErrorScreen } from '@/components/ui/ErrorScreen'
 import {
   BODY_TYPE_LABELS,
   COLOR_LABELS,
-  PLACEMENT_LABELS,
-  PRINT_SIZE_LABELS,
-  DEFAULT_PRICES,
+  FIXED_PRICE,
   type Design,
   type BodyType,
   type ProductColor,
@@ -20,9 +18,18 @@ import {
   type Placement,
   type PrintSize,
 } from '@/types'
-import { formatPrice } from '@/lib/utils'
 
-const VIEWS = ['front', 'side', 'back'] as const
+const PLACEMENT_LABELS_SHORT: Record<string, string> = {
+  one_point: 'ワンポイント（左胸）',
+  front:     'フロントセンター',
+  back:      'バック',
+}
+
+const PRINT_SIZE_LABELS_SHORT: Record<string, string> = {
+  small:  '小',
+  medium: '中',
+  large:  '大',
+}
 
 export default function PreviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -30,16 +37,15 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
   const searchParams = useSearchParams()
   const supabase = createClient()
 
-  const body_type = searchParams.get('body_type') as BodyType
-  const color = searchParams.get('color') as ProductColor
-  const size = searchParams.get('size') as Size
-  const placement = searchParams.get('placement') as Placement
-  const print_size = searchParams.get('print_size') as PrintSize
+  const body_type  = searchParams.get('body_type')  as BodyType
+  const color      = searchParams.get('color')       as ProductColor
+  const size       = searchParams.get('size')        as Size
+  const placement  = searchParams.get('placement')   as Placement
+  const print_size = searchParams.get('print_size')  as PrintSize
 
   const [design, setDesign] = useState<Design | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
-  const [viewIdx, setViewIdx] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [paymentError, setPaymentError] = useState<string | null>(null)
 
@@ -65,9 +71,10 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
   if (loading) return <LoadingSpinner className="py-32" />
   if (error || !design) return <ErrorScreen message="データの取得に失敗しました" />
 
-  const basePrice = DEFAULT_PRICES[body_type].price
-  const customFee = placement === 'custom' ? 500 : 0
-  const total = basePrice + customFee
+  // placement → ProductMockup の placement prop に変換
+  const mockupPlacement: 'front' | 'one_point' | 'back' =
+    placement === 'one_point' ? 'one_point' :
+    placement === 'back'      ? 'back'      : 'front'
 
   async function handleCheckout() {
     setSubmitting(true)
@@ -76,14 +83,7 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          design_id: id,
-          body_type,
-          color,
-          size,
-          placement,
-          print_size,
-        }),
+        body: JSON.stringify({ design_id: id, body_type, color, size, placement, print_size }),
       })
       if (!res.ok) throw new Error('checkout failed')
       const { url } = await res.json()
@@ -95,82 +95,74 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
   }
 
   return (
-    <div className="min-h-dvh bg-white pb-24">
+    <div className="min-h-dvh bg-white pb-36">
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-gray-100 px-2 h-12 flex items-center gap-2">
         <button onClick={() => router.back()} className="p-2"><ChevronLeft size={22} /></button>
-        <h1 className="text-base font-semibold">プレビュー</h1>
+        <h1 className="text-base font-semibold">確認・注文</h1>
       </header>
 
-      <div className="px-4 py-3">
-        <MockupPreview
-          designImageUrl={design.transparent_image_url ?? design.image_url}
+      {/* モックアップ */}
+      <div className="px-4 pt-4 pb-2">
+        <ProductMockup
           bodyType={body_type}
           color={color}
-          placement={placement}
-          printSize={print_size}
-          view={VIEWS[viewIdx]}
+          designUrl={design.transparent_image_url ?? design.image_url}
+          placement={mockupPlacement}
+          className="aspect-square"
         />
-        <div className="mt-3 grid grid-cols-3 gap-2">
-          {VIEWS.map((v, idx) => (
-            <button
-              key={v}
-              onClick={() => setViewIdx(idx)}
-              className={`py-2 text-xs font-medium rounded-lg border ${
-                viewIdx === idx ? 'border-black bg-black text-white' : 'border-gray-200 text-gray-600'
-              }`}
-            >
-              {v === 'front' ? '前' : v === 'side' ? '横' : '後ろ'}
-            </button>
-          ))}
+      </div>
+
+      {/* デザインタイトル */}
+      <div className="px-5 pt-3 pb-1">
+        <p className="text-xs text-gray-400">デザイン</p>
+        <p className="text-sm font-semibold mt-0.5">{design.title}</p>
+      </div>
+
+      {/* 注文内容 */}
+      <div className="px-5 py-4 border-t border-gray-100 space-y-3 mt-2">
+        <h2 className="text-sm font-bold">注文内容</h2>
+        <Row label="アイテム"      value={BODY_TYPE_LABELS[body_type]} />
+        <Row label="カラー"        value={COLOR_LABELS[color]} />
+        <Row label="サイズ"        value={size} />
+        <Row label="配置"          value={PLACEMENT_LABELS_SHORT[placement] ?? placement} />
+        <Row label="プリントサイズ" value={PRINT_SIZE_LABELS_SHORT[print_size] ?? print_size} />
+      </div>
+
+      {/* 料金 */}
+      <div className="px-5 pb-4 border-t border-gray-100 pt-4 space-y-2">
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-500">商品代金</span>
+          <span>¥{FIXED_PRICE.toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-500">送料</span>
+          <span className="text-gray-500">本土無料 ／ 離島は別途</span>
+        </div>
+        <div className="flex justify-between text-sm font-bold pt-1 border-t border-gray-100">
+          <span>合計（税込）</span>
+          <span>¥{FIXED_PRICE.toLocaleString()}</span>
         </div>
       </div>
 
-      {/* 詳細 */}
-      <div className="px-5 py-4 border-t border-gray-100 space-y-2.5">
-        <h2 className="text-sm font-bold mb-2">注文内容</h2>
-        <Row label="商品" value={BODY_TYPE_LABELS[body_type]} />
-        <Row label="カラー" value={COLOR_LABELS[color]} />
-        <Row label="サイズ" value={size} />
-        <Row label="配置" value={PLACEMENT_LABELS[placement]} />
-        <Row label="プリントサイズ" value={PRINT_SIZE_LABELS[print_size]} />
-        <div className="border-t border-gray-100 pt-3 mt-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-500">商品代金</span>
-            <span>{formatPrice(basePrice)}</span>
-          </div>
-          {customFee > 0 && (
-            <div className="flex justify-between text-sm mt-1">
-              <span className="text-gray-500">カスタム配置追加料金</span>
-              <span>{formatPrice(customFee)}</span>
-            </div>
-          )}
-          <div className="flex justify-between text-sm mt-1">
-            <span className="text-gray-500">送料</span>
-            <span className="text-gray-500">本土無料 ／ 離島は別途</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="px-5 py-3 bg-yellow-50 border-t border-yellow-100">
-        <p className="text-[11px] text-yellow-900 leading-relaxed">
+      {/* 注意書き */}
+      <div className="mx-5 px-4 py-3 bg-amber-50 border border-amber-100 rounded-xl">
+        <p className="text-[11px] text-amber-900 leading-relaxed">
           ⚠️ 受注生産品のため、注文確定後のキャンセル・返品はできません。
         </p>
       </div>
 
-      {paymentError && <p className="text-sm text-red-500 text-center my-3">{paymentError}</p>}
+      {paymentError && (
+        <p className="text-sm text-red-500 text-center mt-4">{paymentError}</p>
+      )}
 
-      {/* 固定の購入バー */}
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white border-t border-gray-100 px-5 py-3 safe-bottom z-40">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-gray-500">合計（税込）</span>
-          <span className="text-xl font-bold">{formatPrice(total)}</span>
-        </div>
+      {/* 固定購入バー */}
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white border-t border-gray-100 px-5 py-4 z-40">
         <button
           onClick={handleCheckout}
           disabled={submitting}
-          className="w-full py-3 bg-black text-white text-sm font-semibold rounded-xl disabled:opacity-50"
+          className="w-full py-4 bg-black text-white text-sm font-bold rounded-2xl disabled:opacity-50 tracking-wide"
         >
-          {submitting ? '決済画面へ移動中...' : 'この内容で購入する'}
+          {submitting ? '決済画面へ移動中...' : `¥${FIXED_PRICE.toLocaleString()}　購入する`}
         </button>
       </div>
     </div>
