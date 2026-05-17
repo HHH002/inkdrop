@@ -27,6 +27,7 @@ export function ProfileDesignList({ userId, isOwner = false }: Props) {
   const [loading, setLoading] = useState(true)
   const [deleteTarget, setDeleteTarget] = useState<Design | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const supabase = createClient()
 
   async function load() {
@@ -46,12 +47,21 @@ export function ProfileDesignList({ userId, isOwner = false }: Props) {
   async function handleDelete() {
     if (!deleteTarget) return
     setDeleting(true)
+    setDeleteError(null)
     try {
-      await supabase.from('designs').delete().eq('id', deleteTarget.id)
+      const { error } = await supabase
+        .from('designs')
+        .delete()
+        .eq('id', deleteTarget.id)
+        .eq('user_id', userId)
+      if (error) {
+        setDeleteError('このデザインには注文があるため削除できません。')
+        return
+      }
       setDesigns((prev) => prev.filter((d) => d.id !== deleteTarget.id))
+      setDeleteTarget(null)
     } finally {
       setDeleting(false)
-      setDeleteTarget(null)
     }
   }
 
@@ -107,18 +117,23 @@ export function ProfileDesignList({ userId, isOwner = false }: Props) {
           <div className="w-full max-w-[480px] bg-white rounded-t-2xl px-5 py-6 space-y-4">
             <p className="text-base font-bold text-center">このデザインを削除しますか？</p>
             <p className="text-sm text-gray-500 text-center">「{deleteTarget.title}」を削除すると元に戻せません。</p>
+            {deleteError && (
+              <p className="text-sm text-red-500 text-center bg-red-50 rounded-xl py-2 px-3">{deleteError}</p>
+            )}
+            {!deleteError && (
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="w-full py-3.5 bg-red-500 text-white text-sm font-semibold rounded-xl disabled:opacity-50"
+              >
+                {deleting ? '削除中...' : '削除する'}
+              </button>
+            )}
             <button
-              onClick={handleDelete}
-              disabled={deleting}
-              className="w-full py-3.5 bg-red-500 text-white text-sm font-semibold rounded-xl disabled:opacity-50"
-            >
-              {deleting ? '削除中...' : '削除する'}
-            </button>
-            <button
-              onClick={() => setDeleteTarget(null)}
+              onClick={() => { setDeleteTarget(null); setDeleteError(null) }}
               className="w-full py-3.5 border border-gray-200 text-gray-700 text-sm font-medium rounded-xl"
             >
-              キャンセル
+              {deleteError ? '閉じる' : 'キャンセル'}
             </button>
           </div>
         </div>
