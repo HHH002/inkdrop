@@ -73,6 +73,14 @@ export interface User {
 // ==============================
 export type CopyrightStatus = 'pending' | 'approved' | 'rejected'
 
+export type DisplayPlacement = 'one_point' | 'front' | 'back'
+
+export const DISPLAY_PLACEMENT_LABELS: Record<DisplayPlacement, string> = {
+  one_point: 'ワンポイント（左胸）',
+  front: 'フロントセンター',
+  back: 'バック',
+}
+
 export interface Design {
   id: string
   user_id: string
@@ -80,6 +88,7 @@ export interface Design {
   description: string | null
   image_url: string
   transparent_image_url: string | null
+  display_placement: DisplayPlacement
   click_count: number
   sales_count: number
   max_sales_count: number
@@ -252,12 +261,14 @@ export interface ProductPrice {
   updated_at: string
 }
 
-// デフォルト価格（TODO: DBから取得する）
+export const FIXED_PRICE = 3300
+
+// デフォルト価格（税込固定 ¥3,300）
 export const DEFAULT_PRICES: Record<BodyType, { price: number; creator_reward: number }> = {
-  tshirt: { price: 4500, creator_reward: 1000 },
-  long_sleeve: { price: 5500, creator_reward: 1200 },
-  hoodie: { price: 8500, creator_reward: 1500 },
-  sweatshirt: { price: 7500, creator_reward: 1300 },
+  tshirt: { price: FIXED_PRICE, creator_reward: 500 },
+  long_sleeve: { price: FIXED_PRICE, creator_reward: 500 },
+  hoodie: { price: FIXED_PRICE, creator_reward: 500 },
+  sweatshirt: { price: FIXED_PRICE, creator_reward: 500 },
 }
 
 // ==============================

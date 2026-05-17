@@ -71,7 +71,7 @@ export default function MyPage() {
       </div>
 
       {/* 投稿一覧 */}
-      <ProfileDesignList userId={user.id} />
+      <ProfileDesignList userId={user.id} isOwner />
     </div>
   )
 }

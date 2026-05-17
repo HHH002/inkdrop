@@ -29,6 +29,7 @@ export default function LoginPage() {
       return
     }
     router.push(redirectTo)
+    router.refresh()
   }
 
   async function handleGoogleLogin() {
