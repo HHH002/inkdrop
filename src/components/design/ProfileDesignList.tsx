@@ -55,7 +55,7 @@ export function ProfileDesignList({ userId, isOwner = false }: Props) {
         .eq('id', deleteTarget.id)
         .eq('user_id', userId)
       if (error) {
-        setDeleteError('このデザインには注文があるため削除できません。')
+        setDeleteError('削除に失敗しました。もう一度お試しください。')
         return
       }
       setDesigns((prev) => prev.filter((d) => d.id !== deleteTarget.id))
