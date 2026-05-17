@@ -56,14 +56,22 @@ const BODY_PATHS: Record<string, { front: string; back: string }> = {
 
 const HOODIE_HOOD = "M23,22 C22,8 28,1 50,0 C72,1 78,8 77,22 C72,16 65,27 63,28 C61,18 39,18 37,28 C35,27 28,16 23,22 Z"
 
+const COLOR_FILLS: Record<string, { base: string; hi: string; shadow: string; stroke: string }> = {
+  white: { base: '#F4F4F2', hi: '#FFFFFF', shadow: '#D0D0CE', stroke: '#C8C8C6' },
+  black: { base: '#202020', hi: '#303030', shadow: '#101010', stroke: '#383838' },
+  gray:  { base: '#9A9A98', hi: '#B8B8B6', shadow: '#707070', stroke: '#888886' },
+}
+
 function ProductWithDesign({
   bodyType,
+  color,
   side,
   designUrl,
   dx, dy, dw, dh,
   selected,
 }: {
   bodyType: string
+  color: string
   side: 'front' | 'back'
   designUrl: string | null
   dx: number; dy: number; dw: number; dh: number
@@ -73,26 +81,38 @@ function ProductWithDesign({
   const bodyPath = paths[side]
   const isHoodie = bodyType === 'hoodie'
   const viewBox = isHoodie ? "0 0 100 118" : "0 0 100 110"
+  const c = COLOR_FILLS[color] ?? COLOR_FILLS.white
+  const gid = `pg-${bodyType}-${color}-${side}`
 
   return (
     <svg viewBox={viewBox} className="w-full h-full" aria-hidden>
+      <defs>
+        <radialGradient id={gid} cx="48%" cy="40%" r="60%">
+          <stop offset="0%"   stopColor={c.hi} />
+          <stop offset="60%"  stopColor={c.base} />
+          <stop offset="100%" stopColor={c.shadow} />
+        </radialGradient>
+        <filter id={`${gid}-s`}>
+          <feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="#000" floodOpacity="0.15" />
+        </filter>
+      </defs>
       {isHoodie && side === 'front' && (
-        <path d={HOODIE_HOOD} fill="#F3F4F6" stroke="#D1D5DB" strokeWidth="1.2" />
+        <path d={HOODIE_HOOD} fill={`url(#${gid})`} stroke={c.stroke} strokeWidth="0.8" filter={`url(#${gid}-s)`} />
       )}
-      <path d={bodyPath} fill="#F3F4F6" stroke="#D1D5DB" strokeWidth="1.2" />
-      {/* collar / neckline */}
+      <path d={bodyPath} fill={`url(#${gid})`} stroke={c.stroke} strokeWidth="0.8" filter={`url(#${gid}-s)`} />
+      {/* neckline rib */}
       {side === 'front' && !isHoodie && (
-        <path d="M37,21 C39,11 61,11 63,21" fill="none" stroke="#C8C8C4" strokeWidth="3" strokeLinecap="round" />
+        <path d="M37,21 C39,11 61,11 63,21" fill="none" stroke={c.shadow} strokeWidth="2.5" strokeLinecap="round" />
       )}
       {/* hoodie pocket */}
       {isHoodie && (
-        <rect x="36" y="76" width="28" height="18" rx="2" fill="#E8E8E6" stroke="#D1D5DB" strokeWidth="0.8" />
+        <rect x="36" y="76" width="28" height="18" rx="2" fill={c.shadow} opacity="0.4" stroke={c.stroke} strokeWidth="0.5" />
       )}
-      {/* sweatshirt / long-sleeve cuffs */}
+      {/* cuffs */}
       {(bodyType === 'sweatshirt' || bodyType === 'long_sleeve' || bodyType === 'hoodie') && (
         <>
-          <line x1="84" y1={bodyType === 'hoodie' ? 106 : 100} x2="97" y2={bodyType === 'hoodie' ? 102 : 96} stroke="#D1D5DB" strokeWidth="3" strokeLinecap="round" />
-          <line x1="16" y1={bodyType === 'hoodie' ? 106 : 100} x2="3"  y2={bodyType === 'hoodie' ? 102 : 96} stroke="#D1D5DB" strokeWidth="3" strokeLinecap="round" />
+          <line x1="84" y1={bodyType === 'hoodie' ? 106 : 100} x2="97" y2={bodyType === 'hoodie' ? 102 : 96} stroke={c.shadow} strokeWidth="2.5" strokeLinecap="round" />
+          <line x1="16" y1={bodyType === 'hoodie' ? 106 : 100} x2="3"  y2={bodyType === 'hoodie' ? 102 : 96} stroke={c.shadow} strokeWidth="2.5" strokeLinecap="round" />
         </>
       )}
       {designUrl ? (
@@ -195,6 +215,7 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
                 <div className="w-full aspect-[10/11] mb-2">
                   <ProductWithDesign
                     bodyType={bodyType ?? 'tshirt'}
+                    color={color ?? 'white'}
                     side={opt.side}
                     designUrl={designImageUrl}
                     dx={opt.x} dy={opt.y} dw={opt.w} dh={opt.h}
