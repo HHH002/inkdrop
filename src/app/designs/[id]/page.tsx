@@ -8,6 +8,7 @@ import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { ErrorScreen } from '@/components/ui/ErrorScreen'
+import { ProductMockup } from '@/components/design/ProductMockup'
 import {
   BODY_TYPE_LABELS,
   BODY_TYPE_COLORS,
@@ -112,16 +113,26 @@ export default function DesignDetailPage({ params }: { params: Promise<{ id: str
 
       {/* メインプレビュー */}
       <div className="px-4">
-        <div className="aspect-square bg-gray-50 rounded-2xl flex items-center justify-center p-8">
-          <Image
-            src={design.transparent_image_url ?? design.image_url}
-            alt={design.title}
-            width={400}
-            height={400}
-            className="w-full h-full object-contain"
-            unoptimized
+        {bodyType && color ? (
+          <ProductMockup
+            bodyType={bodyType}
+            color={color}
+            designUrl={design.transparent_image_url ?? design.image_url}
+            placement="front"
+            className="aspect-square"
           />
-        </div>
+        ) : (
+          <div className="aspect-square bg-gray-50 rounded-2xl flex items-center justify-center p-8">
+            <Image
+              src={design.transparent_image_url ?? design.image_url}
+              alt={design.title}
+              width={400}
+              height={400}
+              className="w-full h-full object-contain"
+              unoptimized
+            />
+          </div>
+        )}
       </div>
 
       {/* 説明文 */}

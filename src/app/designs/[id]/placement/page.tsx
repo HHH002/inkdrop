@@ -31,28 +31,69 @@ const PLACEMENT_OPTIONS: PlacementOption[] = [
 ]
 
 // ==============================
-// T-shirt SVG with design overlay
+// Product SVG with design overlay (100x110 viewBox, compact)
 // ==============================
-function TshirtWithDesign({
+
+// Front / back paths per body type (viewBox 0 0 100 110)
+const BODY_PATHS: Record<string, { front: string; back: string }> = {
+  tshirt: {
+    front: "M37,21 C39,11 61,11 63,21 L75,15 L96,37 L86,52 L72,45 L72,106 L28,106 L28,45 L14,52 L4,37 L25,15 Z",
+    back:  "M37,21 C39,11 61,11 63,21 L75,15 L96,37 L86,52 L72,45 L72,106 L28,106 L28,45 L14,52 L4,37 L25,15 Z",
+  },
+  long_sleeve: {
+    front: "M37,21 C39,11 61,11 63,21 L76,15 L96,94 L84,98 L72,45 L72,106 L28,106 L28,45 L16,98 L4,94 L24,15 Z",
+    back:  "M37,21 C39,11 61,11 63,21 L76,15 L96,94 L84,98 L72,45 L72,106 L28,106 L28,45 L16,98 L4,94 L24,15 Z",
+  },
+  sweatshirt: {
+    front: "M37,22 C39,12 61,12 63,22 L77,16 L97,96 L84,100 L72,46 L72,105 L28,105 L28,46 L16,100 L3,96 L23,16 Z",
+    back:  "M37,22 C39,12 61,12 63,22 L77,16 L97,96 L84,100 L72,46 L72,105 L28,105 L28,46 L16,100 L3,96 L23,16 Z",
+  },
+  hoodie: {
+    front: "M37,28 C39,18 61,18 63,28 L77,22 L97,102 L84,106 L72,52 L72,112 L28,112 L28,52 L16,106 L3,102 L23,22 Z",
+    back:  "M37,28 C39,18 61,18 63,28 L77,22 L97,102 L84,106 L72,52 L72,112 L28,112 L28,52 L16,106 L3,102 L23,22 Z",
+  },
+}
+
+const HOODIE_HOOD = "M23,22 C22,8 28,1 50,0 C72,1 78,8 77,22 C72,16 65,27 63,28 C61,18 39,18 37,28 C35,27 28,16 23,22 Z"
+
+function ProductWithDesign({
+  bodyType,
   side,
   designUrl,
   dx, dy, dw, dh,
   selected,
 }: {
+  bodyType: string
   side: 'front' | 'back'
   designUrl: string | null
   dx: number; dy: number; dw: number; dh: number
   selected: boolean
 }) {
-  const bodyPath = side === 'front'
-    ? "M28 22 L16 12 L2 18 L10 44 L20 41 L20 98 L80 98 L80 41 L90 44 L98 18 L84 12 L72 22 C68 32 32 32 28 22 Z"
-    : "M28 22 L16 12 L2 18 L10 44 L20 41 L20 98 L80 98 L80 41 L90 44 L98 18 L84 12 L72 22 C72 28 28 28 28 22 Z"
+  const paths = BODY_PATHS[bodyType] ?? BODY_PATHS.tshirt
+  const bodyPath = paths[side]
+  const isHoodie = bodyType === 'hoodie'
+  const viewBox = isHoodie ? "0 0 100 118" : "0 0 100 110"
 
   return (
-    <svg viewBox="0 0 100 110" className="w-full h-full" aria-hidden>
-      <path d={bodyPath} fill="#F3F4F6" stroke="#D1D5DB" strokeWidth="1.5" />
-      {side === 'front' && (
-        <path d="M28 22 C32 34 68 34 72 22" fill="#E5E7EB" stroke="#D1D5DB" strokeWidth="1" />
+    <svg viewBox={viewBox} className="w-full h-full" aria-hidden>
+      {isHoodie && side === 'front' && (
+        <path d={HOODIE_HOOD} fill="#F3F4F6" stroke="#D1D5DB" strokeWidth="1.2" />
+      )}
+      <path d={bodyPath} fill="#F3F4F6" stroke="#D1D5DB" strokeWidth="1.2" />
+      {/* collar / neckline */}
+      {side === 'front' && !isHoodie && (
+        <path d="M37,21 C39,11 61,11 63,21" fill="none" stroke="#C8C8C4" strokeWidth="3" strokeLinecap="round" />
+      )}
+      {/* hoodie pocket */}
+      {isHoodie && (
+        <rect x="36" y="76" width="28" height="18" rx="2" fill="#E8E8E6" stroke="#D1D5DB" strokeWidth="0.8" />
+      )}
+      {/* sweatshirt / long-sleeve cuffs */}
+      {(bodyType === 'sweatshirt' || bodyType === 'long_sleeve' || bodyType === 'hoodie') && (
+        <>
+          <line x1="84" y1={bodyType === 'hoodie' ? 106 : 100} x2="97" y2={bodyType === 'hoodie' ? 102 : 96} stroke="#D1D5DB" strokeWidth="3" strokeLinecap="round" />
+          <line x1="16" y1={bodyType === 'hoodie' ? 106 : 100} x2="3"  y2={bodyType === 'hoodie' ? 102 : 96} stroke="#D1D5DB" strokeWidth="3" strokeLinecap="round" />
+        </>
       )}
       {designUrl ? (
         <image href={designUrl} x={dx} y={dy} width={dw} height={dh} preserveAspectRatio="xMidYMid meet" />
@@ -152,7 +193,8 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
                 }`}
               >
                 <div className="w-full aspect-[10/11] mb-2">
-                  <TshirtWithDesign
+                  <ProductWithDesign
+                    bodyType={bodyType ?? 'tshirt'}
                     side={opt.side}
                     designUrl={designImageUrl}
                     dx={opt.x} dy={opt.y} dw={opt.w} dh={opt.h}
