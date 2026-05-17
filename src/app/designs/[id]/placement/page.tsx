@@ -5,125 +5,178 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 import type { BodyType, ProductColor, Size } from '@/types'
 
-// ── カラーパレット（ProductMockupと同じ） ─────────────────────
-const PALETTE: Record<string, { fill: string; stroke: string; shadow1: string; shadow2: string; hi: string }> = {
-  white: { fill: '#F7F7F5', stroke: '#DDDDD8', shadow1: '#E4E4E0', shadow2: '#CACAC6', hi: '#FFFFFF' },
-  black: { fill: '#1C1C1C', stroke: '#323232', shadow1: '#141414', shadow2: '#0A0A0A', hi: '#2E2E2E' },
-  gray:  { fill: '#9C9C9A', stroke: '#888886', shadow1: '#7A7A78', shadow2: '#626260', hi: '#B4B4B2' },
+// ── モックアップ写真URL ────────────────────────────────────────
+const PHOTO = {
+  front: 'https://images.unsplash.com/photo-1620799139507-2a76f79a2f4d?fm=jpg&q=80&w=400&auto=format&fit=crop',
+  back:  'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?fm=jpg&q=80&w=400&auto=format&fit=crop',
+}
+
+// カラーごとのCSSフィルター（白ベース写真を近似）
+const COLOR_FILTER: Record<string, string> = {
+  white: 'none',
+  black: 'grayscale(100%) brightness(20%)',
+  gray:  'grayscale(100%) brightness(65%)',
 }
 
 // ── 型定義 ────────────────────────────────────────────────────
-interface GuideRect  { x: number; y: number; w: number; h: number }
-interface TextGuide  { x: number; y: number; fontSize: number }
+interface PhotoGuide {
+  top: number; left: number; width: number; height: number  // %値
+}
+interface PhotoText {
+  top: number; left: number  // %値
+}
 interface PatternOpt {
   id: string
   label: string
   desc: string
   side: 'front' | 'back'
-  guide?: GuideRect | null
-  textGuide?: TextGuide | null
+  photoGuide?: PhotoGuide | null
+  photoText?: PhotoText | null
   placement: string | null
   print_size: string | null
 }
 
+// ── SVG座標→写真%変換（シャツ領域: left18%, top8%, w64%, h84%） ─
+function pct(svgX: number, svgY: number, svgW: number, svgH: number): PhotoGuide {
+  const sL = 110, sW = 180, sT = 60, sH = 364
+  const pL = 0.18, pW = 0.64, pT = 0.08, pH = 0.84
+  return {
+    left:   Math.round((pL + (svgX - sL) / sW * pW) * 1000) / 10,
+    top:    Math.round((pT + (svgY - sT) / sH * pH) * 1000) / 10,
+    width:  Math.round(svgW / sW * pW * 1000) / 10,
+    height: Math.round(svgH / sH * pH * 1000) / 10,
+  }
+}
+function pctXY(svgX: number, svgY: number): PhotoText {
+  const sL = 110, sW = 180, sT = 60, sH = 364
+  return {
+    left: Math.round((0.18 + (svgX - sL) / sW * 0.64) * 1000) / 10,
+    top:  Math.round((0.08 + (svgY - sT) / sH * 0.84) * 1000) / 10,
+  }
+}
+
 // ── パターン定義 ──────────────────────────────────────────────
 const FRONT_PATTERNS: PatternOpt[] = [
-  { id: 'A',  label: 'A｜ワンポイント',      desc: '左胸・小ロゴ配置',        side: 'front', guide: { x: 116, y: 148, w: 60,  h: 60  }, placement: 'one_point', print_size: 'small'  },
-  { id: 'C1', label: 'C-1｜フロントスモール', desc: '胸中央・中くらいのプリント', side: 'front', guide: { x: 142, y: 168, w: 116, h: 116 }, placement: 'front',     print_size: 'medium' },
-  { id: 'C2', label: 'C-2｜フロントビッグ',  desc: '胸中央・大きめプリント',   side: 'front', guide: { x: 118, y: 148, w: 164, h: 164 }, placement: 'front',     print_size: 'large'  },
+  {
+    id: 'A', label: 'A｜ワンポイント', desc: '左胸・小ロゴ配置', side: 'front',
+    photoGuide: pct(116, 148, 60, 60),
+    placement: 'one_point', print_size: 'small',
+  },
+  {
+    id: 'C1', label: 'C-1｜フロントスモール', desc: '胸中央・中くらいのプリント', side: 'front',
+    photoGuide: pct(142, 168, 116, 116),
+    placement: 'front', print_size: 'medium',
+  },
+  {
+    id: 'C2', label: 'C-2｜フロントビッグ', desc: '胸中央・大きめプリント', side: 'front',
+    photoGuide: pct(118, 148, 164, 164),
+    placement: 'front', print_size: 'large',
+  },
 ]
 
 const BACK_PATTERNS: PatternOpt[] = [
-  { id: 'B1',  label: 'B-1｜縦長デザイン', desc: '背面中央・縦長プリント',    side: 'back', guide: { x: 160, y: 148, w: 80,  h: 144 }, placement: 'back', print_size: 'large'  },
-  { id: 'B2',  label: 'B-2｜横長デザイン', desc: '背面中央・横長プリント',    side: 'back', guide: { x: 116, y: 196, w: 168, h: 84  }, placement: 'back', print_size: 'medium' },
-  { id: 'BT1', label: '縦長とテキスト',    desc: '縦長プリント＋テキスト',    side: 'back', guide: { x: 160, y: 140, w: 80,  h: 120 }, textGuide: { x: 200, y: 308, fontSize: 22 }, placement: 'back', print_size: 'large'  },
-  { id: 'BT2', label: '横長とテキスト',    desc: '横長プリント＋テキスト',    side: 'back', guide: { x: 116, y: 168, w: 168, h: 84  }, textGuide: { x: 200, y: 306, fontSize: 22 }, placement: 'back', print_size: 'medium' },
+  {
+    id: 'B1', label: 'B-1｜縦長デザイン', desc: '背面中央・縦長プリント', side: 'back',
+    photoGuide: pct(160, 148, 80, 144),
+    placement: 'back', print_size: 'large',
+  },
+  {
+    id: 'B2', label: 'B-2｜横長デザイン', desc: '背面中央・横長プリント', side: 'back',
+    photoGuide: pct(116, 196, 168, 84),
+    placement: 'back', print_size: 'medium',
+  },
+  {
+    id: 'BT1', label: '縦長とテキスト', desc: '縦長プリント＋テキスト', side: 'back',
+    photoGuide: pct(160, 140, 80, 120),
+    photoText:  pctXY(200, 308),
+    placement: 'back', print_size: 'large',
+  },
+  {
+    id: 'BT2', label: '横長とテキスト', desc: '横長プリント＋テキスト', side: 'back',
+    photoGuide: pct(116, 168, 168, 84),
+    photoText:  pctXY(200, 306),
+    placement: 'back', print_size: 'medium',
+  },
 ]
 
 const TEXT_PATTERNS: PatternOpt[] = [
-  { id: 'AT1', label: 'A.T-1', desc: '左胸テキスト',          side: 'front', textGuide: { x: 152, y: 183, fontSize: 20 }, placement: 'one_point', print_size: 'small'  },
-  { id: 'AT2', label: 'A.T-2', desc: '胸中央テキスト',        side: 'front', textGuide: { x: 200, y: 258, fontSize: 24 }, placement: 'front',     print_size: 'medium' },
-  { id: 'AT3', label: 'A.T-3', desc: '右下テキスト',          side: 'front', textGuide: { x: 248, y: 352, fontSize: 20 }, placement: 'front',     print_size: 'small'  },
-  { id: 'CT1', label: 'C.T-1', desc: '胸中央小テキスト',      side: 'front', guide: { x: 142, y: 168, w: 116, h: 96  }, textGuide: { x: 200, y: 302, fontSize: 20 }, placement: 'front', print_size: 'medium' },
-  { id: 'CT3', label: 'C.T-3', desc: '大きめ中央＋上テキスト', side: 'front', guide: { x: 118, y: 180, w: 164, h: 144 }, textGuide: { x: 200, y: 162, fontSize: 22 }, placement: 'front', print_size: 'large'  },
+  {
+    id: 'AT1', label: 'A.T-1', desc: '左胸テキスト', side: 'front',
+    photoText: pctXY(152, 183), placement: 'one_point', print_size: 'small',
+  },
+  {
+    id: 'AT2', label: 'A.T-2', desc: '胸中央テキスト', side: 'front',
+    photoText: pctXY(200, 258), placement: 'front', print_size: 'medium',
+  },
+  {
+    id: 'AT3', label: 'A.T-3', desc: '右下テキスト', side: 'front',
+    photoText: pctXY(248, 352), placement: 'front', print_size: 'small',
+  },
+  {
+    id: 'CT1', label: 'C.T-1', desc: '胸中央小テキスト', side: 'front',
+    photoGuide: pct(142, 168, 116, 96),
+    photoText:  pctXY(200, 302),
+    placement: 'front', print_size: 'medium',
+  },
+  {
+    id: 'CT3', label: 'C.T-3', desc: '大きめ中央＋上テキスト', side: 'front',
+    photoGuide: pct(118, 180, 164, 144),
+    photoText:  pctXY(200, 162),
+    placement: 'front', print_size: 'large',
+  },
 ]
 
-// ── ミニモックアップSVG ───────────────────────────────────────
-function MiniMockup({
-  color,
-  side = 'front',
-  guide,
-  textGuide,
-  uid,
+// ── 写真ベースモックアップ ─────────────────────────────────────
+function PhotoMockup({
+  side, color, photoGuide, photoText,
 }: {
+  side: 'front' | 'back'
   color: string
-  side?: 'front' | 'back'
-  guide?: GuideRect | null
-  textGuide?: TextGuide | null
-  uid: string
+  photoGuide?: PhotoGuide | null
+  photoText?: PhotoText | null
 }) {
-  const p = PALETTE[color] ?? PALETTE.white
+  const filter = COLOR_FILTER[color] ?? 'none'
   return (
-    <svg viewBox="0 0 400 440" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-      <defs>
-        <linearGradient id={`${uid}-lg`} x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%"   stopColor={p.shadow1} />
-          <stop offset="18%"  stopColor={p.fill} />
-          <stop offset="50%"  stopColor={p.hi} />
-          <stop offset="82%"  stopColor={p.fill} />
-          <stop offset="100%" stopColor={p.shadow1} />
-        </linearGradient>
-        <linearGradient id={`${uid}-sl`} x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%"   stopColor={p.shadow2} />
-          <stop offset="60%"  stopColor={p.shadow1} />
-          <stop offset="100%" stopColor={p.fill} />
-        </linearGradient>
-        <linearGradient id={`${uid}-sr`} x1="100%" y1="0%" x2="0%" y2="0%">
-          <stop offset="0%"   stopColor={p.shadow2} />
-          <stop offset="60%"  stopColor={p.shadow1} />
-          <stop offset="100%" stopColor={p.fill} />
-        </linearGradient>
-        <filter id={`${uid}-ds`} x="-10%" y="-5%" width="120%" height="120%">
-          <feDropShadow dx="0" dy="5" stdDeviation="9" floodColor="#000" floodOpacity="0.17" />
-        </filter>
-        <radialGradient id={`${uid}-hl`} cx="50%" cy="35%" r="50%">
-          <stop offset="0%"   stopColor="#FFF" stopOpacity="0.22" />
-          <stop offset="100%" stopColor="#FFF" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-
-      <ellipse cx="200" cy="434" rx="148" ry="7" fill="#000" opacity="0.09" />
-      <path d="M102,62 L20,108 L36,168 L112,142 Z"  fill={`url(#${uid}-sl)`} stroke={p.stroke} strokeWidth="1" filter={`url(#${uid}-ds)`} />
-      <path d="M298,62 L380,108 L364,168 L288,142 Z" fill={`url(#${uid}-sr)`} stroke={p.stroke} strokeWidth="1" filter={`url(#${uid}-ds)`} />
-      <path
-        d="M102,62 C118,54 146,48 152,70 C160,34 240,34 248,70 C254,48 282,54 298,62 L288,142 L290,424 L110,424 L112,142 Z"
-        fill={`url(#${uid}-lg)`} stroke={p.stroke} strokeWidth="1" filter={`url(#${uid}-ds)`}
+    <div className="relative w-full aspect-[4/5] overflow-hidden rounded-xl bg-gray-100">
+      {/* ベース写真 */}
+      <img
+        src={PHOTO[side]}
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ filter }}
+        draggable={false}
       />
-      <path d="M152,70 C160,34 240,34 248,70 C234,90 166,90 152,70 Z" fill={p.shadow1} />
-      <path d="M152,70 C160,34 240,34 248,70" fill="none" stroke={p.shadow2} strokeWidth="5" strokeLinecap="round" />
-      <path d="M112,142 L288,142" fill="none" stroke={p.shadow1} strokeWidth="1" opacity="0.5" />
-      <path d="M112,142 L110,424" fill="none" stroke={p.shadow1} strokeWidth="1" opacity="0.35" />
-      <path d="M288,142 L290,424" fill="none" stroke={p.shadow1} strokeWidth="1" opacity="0.35" />
-      <path d="M20,108 L36,168"   fill="none" stroke={p.shadow2} strokeWidth="4" strokeLinecap="round" />
-      <path d="M380,108 L364,168" fill="none" stroke={p.shadow2} strokeWidth="4" strokeLinecap="round" />
-      <path d="M110,420 L290,420" fill="none" stroke={p.shadow2} strokeWidth="5" strokeLinecap="round" opacity="0.7" />
-      <rect x="110" y="62" width="180" height="362" rx="4" fill={`url(#${uid}-hl)`} />
-
+      {/* バック表示 */}
       {side === 'back' && (
-        <text x="200" y="290" textAnchor="middle" fontSize="18" fill={p.shadow2} fontFamily="sans-serif" opacity="0.35" letterSpacing="3">BACK</text>
+        <div className="absolute top-2 left-2 bg-black/30 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full tracking-wider">
+          BACK
+        </div>
       )}
-      {guide && (
-        <rect x={guide.x} y={guide.y} width={guide.w} height={guide.h}
-          fill="rgba(34,197,94,0.15)" stroke="rgb(22,163,74)" strokeWidth="2.5" rx="4" strokeDasharray="7,4" />
+      {/* ガイド矩形 */}
+      {photoGuide && (
+        <div
+          className="absolute border-2 border-dashed border-green-400 bg-green-400/20 rounded"
+          style={{
+            top:    `${photoGuide.top}%`,
+            left:   `${photoGuide.left}%`,
+            width:  `${photoGuide.width}%`,
+            height: `${photoGuide.height}%`,
+          }}
+        />
       )}
-      {textGuide && (
-        <text x={textGuide.x} y={textGuide.y} textAnchor="middle"
-          fontSize={textGuide.fontSize} fill="rgb(22,163,74)"
-          fontFamily="sans-serif" fontWeight="700" letterSpacing="2" opacity="0.9">
+      {/* TEXTラベル */}
+      {photoText && (
+        <div
+          className="absolute text-green-400 font-black text-[10px] tracking-widest leading-none -translate-x-1/2 -translate-y-1/2"
+          style={{
+            top:  `${photoText.top}%`,
+            left: `${photoText.left}%`,
+          }}
+        >
           TEXT
-        </text>
+        </div>
       )}
-    </svg>
+    </div>
   )
 }
 
@@ -171,16 +224,15 @@ function PatternCard({ opt, isSelected, color, onClick }: {
           : 'border-gray-200'
       }`}
     >
-      <div className="w-full aspect-[10/11] mb-2 relative">
-        <MiniMockup
-          color={color}
+      <div className="w-full mb-2 relative">
+        <PhotoMockup
           side={opt.side}
-          guide={opt.guide}
-          textGuide={opt.textGuide}
-          uid={`${opt.id}-${color}`}
+          color={color}
+          photoGuide={opt.photoGuide}
+          photoText={opt.photoText}
         />
         {isSelected && (
-          <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center shadow">
+          <div className="absolute top-2 right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center shadow">
             <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
               <path d="M1 4L3.5 6.5L9 1.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
@@ -256,7 +308,6 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
 
   const colorStr = color ?? 'white'
 
-  // 実際の印刷パターンが選ばれているか
   const hasPrintSelection =
     FRONT_PATTERNS.some(p => p.id === frontPattern) ||
     BACK_PATTERNS.some(p => p.id === backPattern)
@@ -274,12 +325,12 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
     if (!primary?.placement) return
 
     const p = new URLSearchParams()
-    if (bodyType)       p.set('body_type',  bodyType)
-    if (color)          p.set('color',      color)
-    if (size)           p.set('size',       size)
+    if (bodyType)       p.set('body_type',    bodyType)
+    if (color)          p.set('color',        color)
+    if (size)           p.set('size',         size)
     p.set('placement',  primary.placement)
     p.set('print_size', primary.print_size!)
-    if (designImageUrl) p.set('image_url',  designImageUrl)
+    if (designImageUrl) p.set('image_url',    designImageUrl)
     if (textEnabled && textContent) {
       p.set('text',         textContent)
       p.set('font',         fontStyle)
@@ -296,6 +347,17 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
     { id: 'square',      label: '角ゴシック' },
     { id: 'mincho',      label: '明朝体'    },
     { id: 'handwritten', label: '手書き風'  },
+  ]
+
+  const TEXT_COLORS = [
+    { hex: '#000000', label: '黒'    },
+    { hex: '#FFFFFF', label: '白'    },
+    { hex: '#EF4444', label: '赤'    },
+    { hex: '#3B82F6', label: '青'    },
+    { hex: '#1E3A8A', label: '紺'    },
+    { hex: '#EAB308', label: '黄'    },
+    { hex: '#22C55E', label: '緑'    },
+    { hex: '#6B7280', label: 'グレー' },
   ]
 
   return (
@@ -470,16 +532,7 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
               <div className="px-4 pt-3 pb-3 border-b border-gray-100">
                 <p className="text-xs font-semibold text-gray-500 mb-2.5">文字カラー</p>
                 <div className="flex flex-wrap gap-2.5">
-                  {[
-                    { hex: '#000000', label: '黒'  },
-                    { hex: '#FFFFFF', label: '白'  },
-                    { hex: '#EF4444', label: '赤'  },
-                    { hex: '#3B82F6', label: '青'  },
-                    { hex: '#1E3A8A', label: '紺'  },
-                    { hex: '#EAB308', label: '黄'  },
-                    { hex: '#22C55E', label: '緑'  },
-                    { hex: '#6B7280', label: 'グレー' },
-                  ].map(c => (
+                  {TEXT_COLORS.map(c => (
                     <button
                       key={c.hex}
                       onClick={() => setTextColor(c.hex)}
@@ -493,7 +546,11 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
                     >
                       {textColor === c.hex && (
                         <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
-                          <path d="M1 5L4.5 8.5L11 1.5" stroke={c.hex === '#FFFFFF' || c.hex === '#EAB308' ? '#374151' : 'white'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path
+                            d="M1 5L4.5 8.5L11 1.5"
+                            stroke={c.hex === '#FFFFFF' || c.hex === '#EAB308' ? '#374151' : 'white'}
+                            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                          />
                         </svg>
                       )}
                     </button>
@@ -506,9 +563,9 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
                 <p className="text-xs font-semibold text-gray-500 mb-2">文字のふち</p>
                 <div className="grid grid-cols-3 gap-2">
                   {([
-                    { id: 'none',  label: 'なし',   preview: 'A' },
-                    { id: 'thin',  label: '細ふち',  preview: 'A' },
-                    { id: 'thick', label: '太ふち',  preview: 'A' },
+                    { id: 'none',  label: 'なし'  },
+                    { id: 'thin',  label: '細ふち' },
+                    { id: 'thick', label: '太ふち' },
                   ] as const).map(o => (
                     <button
                       key={o.id}
@@ -526,11 +583,9 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
                           WebkitTextStroke:
                             o.id === 'thin'  ? '1.5px #374151' :
                             o.id === 'thick' ? '3px #374151'   : 'unset',
-                          textShadow: o.id === 'none' ? 'none' : undefined,
-                          backgroundColor: 'transparent',
                         }}
                       >
-                        {o.preview}
+                        A
                       </span>
                       <span className={`text-[10px] font-medium ${textOutline === o.id ? 'text-blue-600' : 'text-gray-500'}`}>
                         {o.label}
