@@ -201,22 +201,19 @@ function PlacementCard({
   return (
     <button
       onClick={onClick}
-      className={`relative flex flex-col items-center p-3 rounded-2xl border-2 transition-colors bg-white text-left w-full ${
+      className={`relative flex flex-col items-center p-1.5 rounded-xl border-2 transition-colors bg-white text-left w-full ${
         isSelected ? 'border-blue-500 bg-blue-50/40' : 'border-gray-200 active:bg-gray-50'
       }`}
     >
-      <div className="w-full aspect-square mb-2">
+      <div className="w-full aspect-square mb-1">
         <TshirtSVG {...getTshirtProps(svgId)} designUrl={designUrl} designName={designName} bodyType={bodyType} color={color} />
       </div>
-      <p className={`w-full text-[11px] font-semibold leading-tight ${isSelected ? 'text-blue-600' : 'text-gray-800'}`}>
+      <p className={`w-full text-[9px] font-semibold leading-tight ${isSelected ? 'text-blue-600' : 'text-gray-800'}`}>
         {label}
       </p>
-      {desc && (
-        <p className="w-full text-[10px] text-gray-400 mt-0.5 leading-tight">{desc}</p>
-      )}
       {isSelected && (
-        <div className="absolute top-2 right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center shadow-sm">
-          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+        <div className="absolute top-1 right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center shadow-sm">
+          <svg width="8" height="6" viewBox="0 0 10 8" fill="none">
             <path d="M1 4L3.5 6.5L9 1.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
@@ -427,7 +424,7 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
           <h2 className="text-sm font-bold text-gray-900 mb-3">フロント</h2>
 
           <SubLabel label="デザイン" />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-4 gap-2">
             {FRONT_DESIGN.map(opt => (
               <PlacementCard key={opt.id} svgId={opt.id} label={opt.label} desc={opt.desc}
                 isSelected={selectedFront === opt.id}
@@ -437,7 +434,7 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
           </div>
 
           <SubLabel label="テキスト" />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-4 gap-2">
             {FRONT_TEXT.map(opt => (
               <PlacementCard key={opt.id} svgId={opt.id} label={opt.label} desc={opt.desc}
                 isSelected={selectedFront === opt.id}
@@ -447,7 +444,7 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
           </div>
 
           <SubLabel label="デザイン + テキスト" />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-4 gap-2">
             {FRONT_COMBO.map(opt => (
               <PlacementCard key={opt.id} svgId={opt.id} label={opt.label} desc={opt.desc}
                 isSelected={selectedFront === opt.id}
@@ -465,7 +462,7 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
           <h2 className="text-sm font-bold text-gray-900 mb-3">バック</h2>
 
           <SubLabel label="デザイン" />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-4 gap-2">
             {BACK_DESIGN.map(opt => (
               <PlacementCard key={opt.id} svgId={opt.id === 'none' ? 'none-back' : opt.id}
                 label={opt.label} desc={opt.desc}
@@ -476,7 +473,7 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
           </div>
 
           <SubLabel label="テキスト" />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-4 gap-2">
             {BACK_TEXT.map(opt => (
               <PlacementCard key={opt.id} svgId={opt.id} label={opt.label} desc={opt.desc}
                 isSelected={selectedBack === opt.id}
@@ -486,7 +483,7 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
           </div>
 
           <SubLabel label="デザイン + テキスト" />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-4 gap-2">
             {BACK_COMBO.map(opt => (
               <PlacementCard key={opt.id} svgId={opt.id} label={opt.label} desc={opt.desc}
                 isSelected={selectedBack === opt.id}
