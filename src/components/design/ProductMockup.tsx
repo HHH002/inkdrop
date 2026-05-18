@@ -7,272 +7,333 @@ interface Props {
   color: ProductColor
   designUrl?: string | null
   placement?: 'front' | 'one_point' | 'back'
+  patternId?: string
   className?: string
 }
 
-// カラートークン
 const PALETTE = {
-  white: { fill: '#F7F7F5', stroke: '#DDDDD8', shadow1: '#E4E4E0', shadow2: '#CACAC6', hi: '#FFFFFF', bg: '#E0E0DC' },
-  black: { fill: '#1C1C1C', stroke: '#323232', shadow1: '#141414', shadow2: '#0A0A0A', hi: '#2E2E2E', bg: '#484848' },
-  gray:  { fill: '#9C9C9A', stroke: '#888886', shadow1: '#7A7A78', shadow2: '#626260', hi: '#B4B4B2', bg: '#C4C4C2' },
+  white: {
+    body:    '#F2F2EF',
+    outline: '#2A2A2A',
+    seam:    '#AAAAAA',
+    inner:   '#E2E2DE',
+    rib:     '#D8D8D4',
+    bg:      '#DCDCD8',
+    label:   '#AAAAAA',
+  },
+  black: {
+    body:    '#1A1A1A',
+    outline: '#888888',
+    seam:    '#3A3A3A',
+    inner:   '#282828',
+    rib:     '#222222',
+    bg:      '#444444',
+    label:   '#666666',
+  },
+  gray: {
+    body:    '#9A9A9A',
+    outline: '#444444',
+    seam:    '#777777',
+    inner:   '#888888',
+    rib:     '#858585',
+    bg:      '#BCBCBA',
+    label:   '#777777',
+  },
 }
 
-// デザイン配置（400×440 座標系）
+// フォールバック配置（patternId 未指定時）
 const DESIGN_POS = {
-  front:     { x: 142, y: 168, w: 116, h: 116 },
-  one_point: { x: 116, y: 148, w:  60, h:  60 },
-  back:      { x: 142, y: 168, w: 116, h: 116 },
+  front:     { x: 142, y: 165, w: 116, h: 116 },
+  one_point: { x: 120, y: 148, w:  60, h:  60 },
+  back:      { x: 142, y: 165, w: 116, h: 116 },
 }
 
-// ─── 共通シャドウ定義 ─────────────────────────────────────────
-function Defs({ id, p }: { id: string; p: typeof PALETTE.white }) {
-  return (
-    <defs>
-      {/* メインボディグラデーション */}
-      <linearGradient id={`${id}-lg`} x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%"   stopColor={p.shadow1} />
-        <stop offset="18%"  stopColor={p.fill} />
-        <stop offset="50%"  stopColor={p.hi} />
-        <stop offset="82%"  stopColor={p.fill} />
-        <stop offset="100%" stopColor={p.shadow1} />
-      </linearGradient>
-      {/* 袖グラデーション左 */}
-      <linearGradient id={`${id}-sl`} x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%"   stopColor={p.shadow2} />
-        <stop offset="50%"  stopColor={p.shadow1} />
-        <stop offset="100%" stopColor={p.fill} />
-      </linearGradient>
-      {/* 袖グラデーション右 */}
-      <linearGradient id={`${id}-sr`} x1="100%" y1="0%" x2="0%" y2="0%">
-        <stop offset="0%"   stopColor={p.shadow2} />
-        <stop offset="50%"  stopColor={p.shadow1} />
-        <stop offset="100%" stopColor={p.fill} />
-      </linearGradient>
-      {/* ドロップシャドウ */}
-      <filter id={`${id}-ds`} x="-8%" y="-4%" width="116%" height="116%">
-        <feDropShadow dx="0" dy="8" stdDeviation="12" floodColor="#000000" floodOpacity="0.20" />
-      </filter>
-      {/* ハイライトフィルター */}
-      <radialGradient id={`${id}-hl`} cx="50%" cy="35%" r="50%">
-        <stop offset="0%"   stopColor="#FFFFFF" stopOpacity="0.25" />
-        <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
-      </radialGradient>
-    </defs>
-  )
+// パターン別配置座標（400×440 座標系、胴体 x:118-282 / y:80-422）
+const BASE_DP: Record<string, { x: number; y: number; w: number; h: number }> = {
+  A:   { x: 122, y: 100, w:  30, h:  30 },  // 18% torso width, 左胸
+  C1:  { x: 177, y: 118, w:  46, h:  46 },  // 28% torso width, フロント中央
+  C2:  { x: 163, y: 110, w:  74, h:  74 },  // 42% torso width, フロント大
+  B1:  { x: 162, y: 110, w:  76, h: 163 },  // 45% height, 縦長バック
+  B2:  { x: 155, y: 148, w:  90, h:  50 },  // 50% torso width, 横長バック
+  D1:  { x: 165, y: 100, w:  70, h: 140 },
+  D2:  { x: 165, y:  95, w:  70, h: 130 },
+  D3:  { x: 155, y: 138, w:  90, h:  48 },
+  D4:  { x: 155, y: 130, w:  90, h:  48 },
+  AT1: { x: 122, y: 100, w:  58, h:  18 },
+  AT2: { x: 152, y: 158, w:  96, h:  20 },
+  AT3: { x: 182, y: 210, w:  72, h:  18 },
+  CT1: { x: 163, y: 145, w:  74, h:  20 },
+  CT2: { x: 150, y: 142, w: 100, h:  34 },
+  BT1: { x: 145, y:  90, w: 110, h:  26 },
+  BT2: { x: 145, y: 185, w: 110, h:  26 },
+  BT3: { x: 145, y: 280, w: 110, h:  26 },
+}
+
+const Y_ADJ: Record<BodyType, number> = {
+  tshirt:       0,
+  long_sleeve: -5,
+  sweatshirt:  -8,
+  hoodie:      34,
+}
+
+function resolveDP(
+  patternId: string | undefined,
+  placement: 'front' | 'one_point' | 'back',
+  bodyType: BodyType,
+) {
+  if (patternId && BASE_DP[patternId]) {
+    const base = BASE_DP[patternId]
+    return { ...base, y: base.y + Y_ADJ[bodyType] }
+  }
+  const pos = DESIGN_POS[placement]
+  return { ...pos, y: pos.y + Y_ADJ[bodyType] }
+}
+
+interface P { body: string; outline: string; seam: string; inner: string; rib: string; label: string }
+
+interface GarmentProps {
+  p: P
+  id: string
+  designUrl?: string | null
+  placement: 'front' | 'one_point' | 'back'
+  patternId?: string
+  bodyType: BodyType
 }
 
 // ─── Tシャツ ──────────────────────────────────────────────────
-function Tshirt({ p, id, designUrl, placement }: {
-  p: typeof PALETTE.white; id: string; designUrl?: string | null; placement: 'front'|'one_point'|'back'
-}) {
-  const dp = DESIGN_POS[placement]
+function Tshirt({ p, id, designUrl, placement, patternId, bodyType }: GarmentProps) {
+  const dp = resolveDP(patternId, placement, bodyType)
+  const showDesign = !!designUrl && (patternId ? true : placement !== 'back')
+
+  // T-shirt silhouette path
+  const BODY = 'M155,68 C160,38 240,38 245,68 L280,80 L362,100 L347,162 L282,142 L285,422 L115,422 L118,142 L53,162 L38,100 L120,80 Z'
+
   return (
     <svg viewBox="0 0 400 440" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-      <Defs id={id} p={p} />
-      {/* 影 */}
-      <ellipse cx="200" cy="434" rx="148" ry="8" fill="#000" opacity="0.12" />
-      {/* 左袖 */}
-      <path
-        d="M102,62 L20,108 L36,168 L112,142 Z"
-        fill={`url(#${id}-sl)`} stroke={p.stroke} strokeWidth="1" filter={`url(#${id}-ds)`}
-      />
-      {/* 右袖 */}
-      <path
-        d="M298,62 L380,108 L364,168 L288,142 Z"
-        fill={`url(#${id}-sr)`} stroke={p.stroke} strokeWidth="1" filter={`url(#${id}-ds)`}
-      />
-      {/* ボディ */}
-      <path
-        d="M102,62 C118,54 146,48 152,70 C160,34 240,34 248,70 C254,48 282,54 298,62 L288,142 L290,424 L110,424 L112,142 Z"
-        fill={`url(#${id}-lg)`} stroke={p.stroke} strokeWidth="1" filter={`url(#${id}-ds)`}
-      />
-      {/* カラーリブ（内側） */}
-      <path d="M152,70 C160,34 240,34 248,70 C234,90 166,90 152,70 Z" fill={p.shadow1} />
-      {/* カラーリブ縁取り */}
-      <path d="M152,70 C160,34 240,34 248,70" fill="none" stroke={p.shadow2} strokeWidth="5" strokeLinecap="round" />
-      {/* 肩ライン */}
-      <path d="M152,70 L102,62" fill="none" stroke={p.shadow1} strokeWidth="1.2" opacity="0.6" />
-      <path d="M248,70 L298,62" fill="none" stroke={p.shadow1} strokeWidth="1.2" opacity="0.6" />
-      {/* 袖付けライン */}
-      <path d="M112,142 L288,142" fill="none" stroke={p.shadow1} strokeWidth="1" opacity="0.5" />
-      {/* 脇ライン */}
-      <path d="M112,142 L110,424" fill="none" stroke={p.shadow1} strokeWidth="1" opacity="0.4" />
-      <path d="M288,142 L290,424" fill="none" stroke={p.shadow1} strokeWidth="1" opacity="0.4" />
-      {/* 袖折り目 */}
-      <path d="M78,88 C88,112 100,132 112,142" fill="none" stroke={p.shadow1} strokeWidth="1.5" opacity="0.4" />
-      <path d="M322,88 C312,112 300,132 288,142" fill="none" stroke={p.shadow1} strokeWidth="1.5" opacity="0.4" />
-      {/* 袖口リブ */}
-      <path d="M20,108 L36,168" fill="none" stroke={p.shadow2} strokeWidth="4" strokeLinecap="round" />
-      <path d="M380,108 L364,168" fill="none" stroke={p.shadow2} strokeWidth="4" strokeLinecap="round" />
+      <defs>
+        <clipPath id={`${id}-c`}><path d={BODY} /></clipPath>
+      </defs>
+
+      {/* 本体 */}
+      <path d={BODY} fill={p.body} stroke={p.outline} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+
+      {/* 衿内側 */}
+      <path d="M155,68 C160,98 240,98 245,68" fill={p.inner} stroke={p.outline} strokeWidth="1.8" />
+
+      {/* 肩縫い目 */}
+      <line x1="155" y1="68" x2="120" y2="80" stroke={p.seam} strokeWidth="1" />
+      <line x1="245" y1="68" x2="280" y2="80" stroke={p.seam} strokeWidth="1" />
+
+      {/* 袖付け線 */}
+      <line x1="120" y1="80" x2="118" y2="142" stroke={p.seam} strokeWidth="1" />
+      <line x1="280" y1="80" x2="282" y2="142" stroke={p.seam} strokeWidth="1" />
+
+      {/* 脇縫い目 */}
+      <line x1="118" y1="142" x2="115" y2="422" stroke={p.seam} strokeWidth="1" />
+      <line x1="282" y1="142" x2="285" y2="422" stroke={p.seam} strokeWidth="1" />
+
+      {/* 袖口縫い目 */}
+      <line x1="38" y1="100" x2="53" y2="162" stroke={p.seam} strokeWidth="1" />
+      <line x1="362" y1="100" x2="347" y2="162" stroke={p.seam} strokeWidth="1" />
+
       {/* 裾リブ */}
-      <path d="M110,420 L290,420" fill="none" stroke={p.shadow2} strokeWidth="5" strokeLinecap="round" opacity="0.7" />
-      {/* 中央ハイライト */}
-      <rect x="110" y="62" width="180" height="362" rx="4" fill={`url(#${id}-hl)`} />
+      <rect x="115" y="408" width="170" height="14" fill={p.rib} />
+      <line x1="115" y1="408" x2="285" y2="408" stroke={p.outline} strokeWidth="1.5" />
+
       {/* デザイン */}
-      {designUrl && placement !== 'back' && (
-        <image href={designUrl} x={dp.x} y={dp.y} width={dp.w} height={dp.h} preserveAspectRatio="xMidYMid meet" />
+      {showDesign && (
+        <image href={designUrl!} x={dp.x} y={dp.y} width={dp.w} height={dp.h}
+          preserveAspectRatio="xMidYMid meet" clipPath={`url(#${id}-c)`} />
       )}
-      {placement === 'back' && (
-        <text x="200" y="296" textAnchor="middle" fontSize="13" fill={p.shadow2} fontFamily="sans-serif" opacity="0.6">BACK PRINT</text>
+      {!showDesign && placement === 'back' && (
+        <text x="200" y="275" textAnchor="middle" fontSize="11" fill={p.label}
+          fontFamily="sans-serif" letterSpacing="3">BACK</text>
       )}
     </svg>
   )
 }
 
 // ─── ロングスリーブ ───────────────────────────────────────────
-function LongSleeve({ p, id, designUrl, placement }: {
-  p: typeof PALETTE.white; id: string; designUrl?: string | null; placement: 'front'|'one_point'|'back'
-}) {
-  const dp = DESIGN_POS[placement]
+function LongSleeve({ p, id, designUrl, placement, patternId, bodyType }: GarmentProps) {
+  const dp = resolveDP(patternId, placement, bodyType)
+  const showDesign = !!designUrl && (patternId ? true : placement !== 'back')
+
+  const BODY = 'M155,68 C160,38 240,38 245,68 L280,80 L388,378 L356,392 L282,142 L285,422 L115,422 L118,142 L44,392 L12,378 L120,80 Z'
+
   return (
     <svg viewBox="0 0 400 440" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-      <Defs id={id} p={p} />
-      <ellipse cx="200" cy="434" rx="148" ry="8" fill="#000" opacity="0.12" />
-      {/* 左長袖 */}
-      <path d="M102,62 L16,384 L52,396 L112,142 Z" fill={`url(#${id}-sl)`} stroke={p.stroke} strokeWidth="1" filter={`url(#${id}-ds)`} />
-      {/* 右長袖 */}
-      <path d="M298,62 L384,384 L348,396 L288,142 Z" fill={`url(#${id}-sr)`} stroke={p.stroke} strokeWidth="1" filter={`url(#${id}-ds)`} />
-      {/* ボディ */}
-      <path
-        d="M102,62 C118,54 146,48 152,70 C160,34 240,34 248,70 C254,48 282,54 298,62 L288,142 L290,424 L110,424 L112,142 Z"
-        fill={`url(#${id}-lg)`} stroke={p.stroke} strokeWidth="1" filter={`url(#${id}-ds)`}
-      />
-      <path d="M152,70 C160,34 240,34 248,70 C234,90 166,90 152,70 Z" fill={p.shadow1} />
-      <path d="M152,70 C160,34 240,34 248,70" fill="none" stroke={p.shadow2} strokeWidth="5" strokeLinecap="round" />
-      <path d="M152,70 L102,62" fill="none" stroke={p.shadow1} strokeWidth="1.2" opacity="0.6" />
-      <path d="M248,70 L298,62" fill="none" stroke={p.shadow1} strokeWidth="1.2" opacity="0.6" />
-      <path d="M112,142 L288,142" fill="none" stroke={p.shadow1} strokeWidth="1" opacity="0.5" />
-      <path d="M112,142 L110,424" fill="none" stroke={p.shadow1} strokeWidth="1" opacity="0.4" />
-      <path d="M288,142 L290,424" fill="none" stroke={p.shadow1} strokeWidth="1" opacity="0.4" />
-      {/* 袖折り目 */}
-      <path d="M72,128 C62,220 40,310 16,384" fill="none" stroke={p.shadow1} strokeWidth="1.5" opacity="0.35" />
-      <path d="M328,128 C338,220 360,310 384,384" fill="none" stroke={p.shadow1} strokeWidth="1.5" opacity="0.35" />
+      <defs>
+        <clipPath id={`${id}-c`}><path d={BODY} /></clipPath>
+      </defs>
+
+      <path d={BODY} fill={p.body} stroke={p.outline} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+      <path d="M155,68 C160,98 240,98 245,68" fill={p.inner} stroke={p.outline} strokeWidth="1.8" />
+
+      <line x1="155" y1="68" x2="120" y2="80" stroke={p.seam} strokeWidth="1" />
+      <line x1="245" y1="68" x2="280" y2="80" stroke={p.seam} strokeWidth="1" />
+      <line x1="120" y1="80" x2="118" y2="142" stroke={p.seam} strokeWidth="1" />
+      <line x1="280" y1="80" x2="282" y2="142" stroke={p.seam} strokeWidth="1" />
+      <line x1="118" y1="142" x2="115" y2="422" stroke={p.seam} strokeWidth="1" />
+      <line x1="282" y1="142" x2="285" y2="422" stroke={p.seam} strokeWidth="1" />
+
+      {/* 袖縫い目 */}
+      <line x1="12" y1="378" x2="44" y2="392" stroke={p.outline} strokeWidth="1.5" />
+      <line x1="388" y1="378" x2="356" y2="392" stroke={p.outline} strokeWidth="1.5" />
+
       {/* カフスリブ */}
-      <path d="M16,384 L52,396" fill="none" stroke={p.shadow2} strokeWidth="6" strokeLinecap="round" />
-      <path d="M384,384 L348,396" fill="none" stroke={p.shadow2} strokeWidth="6" strokeLinecap="round" />
-      <path d="M110,420 L290,420" fill="none" stroke={p.shadow2} strokeWidth="5" strokeLinecap="round" opacity="0.7" />
-      <rect x="110" y="62" width="180" height="362" rx="4" fill={`url(#${id}-hl)`} />
-      {designUrl && placement !== 'back' && (
-        <image href={designUrl} x={dp.x} y={dp.y} width={dp.w} height={dp.h} preserveAspectRatio="xMidYMid meet" />
+      <path d="M12,378 L44,392" stroke={p.rib} strokeWidth="8" strokeLinecap="round" />
+      <path d="M388,378 L356,392" stroke={p.rib} strokeWidth="8" strokeLinecap="round" />
+      <path d="M12,378 L44,392" stroke={p.outline} strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M388,378 L356,392" stroke={p.outline} strokeWidth="1.8" strokeLinecap="round" />
+
+      {/* 裾リブ */}
+      <rect x="115" y="408" width="170" height="14" fill={p.rib} />
+      <line x1="115" y1="408" x2="285" y2="408" stroke={p.outline} strokeWidth="1.5" />
+
+      {showDesign && (
+        <image href={designUrl!} x={dp.x} y={dp.y} width={dp.w} height={dp.h}
+          preserveAspectRatio="xMidYMid meet" clipPath={`url(#${id}-c)`} />
+      )}
+      {!showDesign && placement === 'back' && (
+        <text x="200" y="275" textAnchor="middle" fontSize="11" fill={p.label}
+          fontFamily="sans-serif" letterSpacing="3">BACK</text>
       )}
     </svg>
   )
 }
 
 // ─── スウェット ───────────────────────────────────────────────
-function Sweatshirt({ p, id, designUrl, placement }: {
-  p: typeof PALETTE.white; id: string; designUrl?: string | null; placement: 'front'|'one_point'|'back'
-}) {
-  const dp = DESIGN_POS[placement]
+function Sweatshirt({ p, id, designUrl, placement, patternId, bodyType }: GarmentProps) {
+  const dp = resolveDP(patternId, placement, bodyType)
+  const showDesign = !!designUrl && (patternId ? true : placement !== 'back')
+
+  const BODY = 'M150,76 C156,42 244,42 250,76 L288,90 L386,388 L352,404 L286,150 L290,422 L110,422 L114,150 L48,404 L14,388 L112,90 Z'
+
   return (
     <svg viewBox="0 0 400 440" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-      <Defs id={id} p={p} />
-      <ellipse cx="200" cy="434" rx="150" ry="8" fill="#000" opacity="0.12" />
-      {/* 左長袖（やや太め） */}
-      <path d="M100,64 L12,390 L50,404 L110,144 Z" fill={`url(#${id}-sl)`} stroke={p.stroke} strokeWidth="1" filter={`url(#${id}-ds)`} />
-      {/* 右長袖 */}
-      <path d="M300,64 L388,390 L350,404 L290,144 Z" fill={`url(#${id}-sr)`} stroke={p.stroke} strokeWidth="1" filter={`url(#${id}-ds)`} />
-      {/* ボディ（少し縦長・ゆったり） */}
-      <path
-        d="M100,64 C118,56 146,50 152,72 C160,36 240,36 248,72 C254,50 282,56 300,64 L290,144 L292,420 L108,420 L110,144 Z"
-        fill={`url(#${id}-lg)`} stroke={p.stroke} strokeWidth="1" filter={`url(#${id}-ds)`}
-      />
-      {/* 太めのクルーネックリブ */}
-      <path d="M152,72 C160,36 240,36 248,72 C234,95 166,95 152,72 Z" fill={p.shadow1} />
-      <path d="M152,72 C160,36 240,36 248,72" fill="none" stroke={p.shadow2} strokeWidth="7" strokeLinecap="round" />
-      <path d="M110,144 L290,144" fill="none" stroke={p.shadow1} strokeWidth="1" opacity="0.5" />
-      <path d="M110,144 L108,420" fill="none" stroke={p.shadow1} strokeWidth="1" opacity="0.4" />
-      <path d="M290,144 L292,420" fill="none" stroke={p.shadow1} strokeWidth="1" opacity="0.4" />
-      {/* 袖折り目 */}
-      <path d="M70,130 C58,220 36,316 12,390" fill="none" stroke={p.shadow1} strokeWidth="1.5" opacity="0.35" />
-      <path d="M330,130 C342,220 364,316 388,390" fill="none" stroke={p.shadow1} strokeWidth="1.5" opacity="0.35" />
-      {/* 太めカフス・裾リブ */}
-      <path d="M12,390 L50,404" fill="none" stroke={p.shadow2} strokeWidth="8" strokeLinecap="round" />
-      <path d="M388,390 L350,404" fill="none" stroke={p.shadow2} strokeWidth="8" strokeLinecap="round" />
-      <path d="M108,415" fill="none" stroke={p.shadow2} strokeWidth="1" />
-      <rect x="108" y="410" width="184" height="10" rx="3" fill={p.shadow1} opacity="0.5" />
-      <path d="M108,420 L292,420" fill="none" stroke={p.shadow2} strokeWidth="6" strokeLinecap="round" opacity="0.7" />
-      <rect x="110" y="64" width="180" height="356" rx="4" fill={`url(#${id}-hl)`} />
-      {designUrl && placement !== 'back' && (
-        <image href={designUrl} x={dp.x} y={dp.y} width={dp.w} height={dp.h} preserveAspectRatio="xMidYMid meet" />
+      <defs>
+        <clipPath id={`${id}-c`}><path d={BODY} /></clipPath>
+      </defs>
+
+      <path d={BODY} fill={p.body} stroke={p.outline} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+
+      {/* クルーネックリブ（スウェットは太め） */}
+      <path d="M150,76 C156,106 244,106 250,76" fill={p.inner} stroke={p.outline} strokeWidth="2" />
+      <path d="M150,76 C156,106 244,106 250,76 C244,118 156,118 150,76 Z" fill={p.inner} opacity="0.5" />
+      <path d="M150,76 C154,62 200,58 250,76" fill="none" stroke={p.outline} strokeWidth="2.5" />
+
+      <line x1="150" y1="76" x2="112" y2="90" stroke={p.seam} strokeWidth="1" />
+      <line x1="250" y1="76" x2="288" y2="90" stroke={p.seam} strokeWidth="1" />
+      <line x1="112" y1="90" x2="114" y2="150" stroke={p.seam} strokeWidth="1" />
+      <line x1="288" y1="90" x2="286" y2="150" stroke={p.seam} strokeWidth="1" />
+      <line x1="114" y1="150" x2="110" y2="422" stroke={p.seam} strokeWidth="1" />
+      <line x1="286" y1="150" x2="290" y2="422" stroke={p.seam} strokeWidth="1" />
+
+      {/* カフスリブ */}
+      <path d="M14,388 L48,404" stroke={p.rib} strokeWidth="10" strokeLinecap="round" />
+      <path d="M386,388 L352,404" stroke={p.rib} strokeWidth="10" strokeLinecap="round" />
+      <path d="M14,388 L48,404" stroke={p.outline} strokeWidth="2" strokeLinecap="round" />
+      <path d="M386,388 L352,404" stroke={p.outline} strokeWidth="2" strokeLinecap="round" />
+
+      {/* 裾リブ */}
+      <rect x="110" y="406" width="180" height="16" fill={p.rib} />
+      <line x1="110" y1="406" x2="290" y2="406" stroke={p.outline} strokeWidth="1.8" />
+      <line x1="110" y1="422" x2="290" y2="422" stroke={p.outline} strokeWidth="1.8" />
+
+      {showDesign && (
+        <image href={designUrl!} x={dp.x} y={dp.y} width={dp.w} height={dp.h}
+          preserveAspectRatio="xMidYMid meet" clipPath={`url(#${id}-c)`} />
+      )}
+      {!showDesign && placement === 'back' && (
+        <text x="200" y="275" textAnchor="middle" fontSize="11" fill={p.label}
+          fontFamily="sans-serif" letterSpacing="3">BACK</text>
       )}
     </svg>
   )
 }
 
 // ─── パーカー ─────────────────────────────────────────────────
-function Hoodie({ p, id, designUrl, placement }: {
-  p: typeof PALETTE.white; id: string; designUrl?: string | null; placement: 'front'|'one_point'|'back'
-}) {
-  const dp = { ...DESIGN_POS[placement], y: DESIGN_POS[placement].y + 34 }
+function Hoodie({ p, id, designUrl, placement, patternId, bodyType }: GarmentProps) {
+  const dp = resolveDP(patternId, placement, bodyType)
+  const showDesign = !!designUrl && (patternId ? true : placement !== 'back')
+
+  const BODY = 'M148,100 C152,66 248,66 252,100 L292,116 L386,404 L352,420 L288,176 L292,456 L108,456 L112,176 L48,420 L14,404 L108,116 Z'
+  const HOOD = 'M100,104 C88,74 88,14 200,6 C312,14 312,74 300,104 C280,84 256,94 252,100 C248,66 152,66 148,100 C144,94 120,84 100,104 Z'
+
   return (
-    <svg viewBox="0 0 400 478" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-      <Defs id={id} p={p} />
-      <ellipse cx="200" cy="472" rx="150" ry="8" fill="#000" opacity="0.12" />
+    <svg viewBox="0 0 400 480" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      <defs>
+        <clipPath id={`${id}-c`}><path d={BODY} /></clipPath>
+      </defs>
+
       {/* フード */}
-      <path
-        d="M100,96 C92,70 94,14 200,6 C306,14 308,70 300,96 C280,78 258,88 248,96 C240,60 160,60 152,96 C142,88 120,78 100,96 Z"
-        fill={`url(#${id}-lg)`} stroke={p.stroke} strokeWidth="1" filter={`url(#${id}-ds)`}
-      />
+      <path d={HOOD} fill={p.body} stroke={p.outline} strokeWidth="2.5" strokeLinejoin="round" />
       {/* フード内側の影 */}
-      <path
-        d="M152,96 C160,60 240,60 248,96 C234,116 166,116 152,96 Z"
-        fill={p.shadow2} opacity="0.6"
-      />
-      {/* 左袖 */}
-      <path d="M100,96 L12,404 L50,418 L110,174 Z" fill={`url(#${id}-sl)`} stroke={p.stroke} strokeWidth="1" filter={`url(#${id}-ds)`} />
-      {/* 右袖 */}
-      <path d="M300,96 L388,404 L350,418 L290,174 Z" fill={`url(#${id}-sr)`} stroke={p.stroke} strokeWidth="1" filter={`url(#${id}-ds)`} />
+      <path d="M148,100 C152,120 248,120 252,100 C236,128 164,128 148,100 Z" fill={p.inner} />
+      <path d="M148,100 C152,120 248,120 252,100" stroke={p.outline} strokeWidth="1.8" />
+
       {/* ボディ */}
-      <path
-        d="M100,96 C120,88 148,84 152,96 C160,60 240,60 248,96 C252,84 280,88 300,96 L290,174 L292,454 L108,454 L110,174 Z"
-        fill={`url(#${id}-lg)`} stroke={p.stroke} strokeWidth="1" filter={`url(#${id}-ds)`}
-      />
+      <path d={BODY} fill={p.body} stroke={p.outline} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+
       {/* フード境界線 */}
-      <path d="M100,96 C120,82 142,90 152,96 C160,60 240,60 248,96 C258,90 280,82 300,96"
-        fill="none" stroke={p.shadow1} strokeWidth="1.2" opacity="0.7" />
+      <path d="M100,104 C120,90 144,98 148,100 C152,66 248,66 252,100 C256,98 280,90 300,104"
+        fill="none" stroke={p.seam} strokeWidth="1.2" />
+
       {/* センタージッパー */}
-      <line x1="200" y1="96" x2="200" y2="196" stroke={p.shadow1} strokeWidth="2" strokeDasharray="5,3" opacity="0.5" />
-      <rect x="193" y="158" width="14" height="10" rx="2" fill={p.shadow1} stroke={p.shadow2} strokeWidth="0.8" opacity="0.8" />
+      <line x1="200" y1="100" x2="200" y2="210" stroke={p.seam} strokeWidth="2" strokeDasharray="6,4" />
+      <rect x="193" y="170" width="14" height="11" rx="2" fill={p.inner} stroke={p.seam} strokeWidth="1" />
+
       {/* カンガルーポケット */}
-      <path
-        d="M140,300 C140,290 152,285 200,285 C248,285 260,290 260,300 L260,366 C260,374 248,378 200,378 C152,378 140,374 140,366 Z"
-        fill={p.shadow1} stroke={p.shadow2} strokeWidth="1" opacity="0.65"
-      />
-      <line x1="200" y1="285" x2="200" y2="378" stroke={p.shadow2} strokeWidth="1" opacity="0.4" />
-      {/* 袖付けライン */}
-      <path d="M110,174 L290,174" fill="none" stroke={p.shadow1} strokeWidth="1" opacity="0.5" />
-      {/* 袖折り目 */}
-      <path d="M70,162 C56,244 34,330 12,404" fill="none" stroke={p.shadow1} strokeWidth="1.5" opacity="0.35" />
-      <path d="M330,162 C344,244 366,330 388,404" fill="none" stroke={p.shadow1} strokeWidth="1.5" opacity="0.35" />
-      {/* カフス・裾リブ */}
-      <path d="M12,404 L50,418" fill="none" stroke={p.shadow2} strokeWidth="8" strokeLinecap="round" />
-      <path d="M388,404 L350,418" fill="none" stroke={p.shadow2} strokeWidth="8" strokeLinecap="round" />
-      <rect x="108" y="444" width="184" height="10" rx="3" fill={p.shadow1} opacity="0.5" />
-      <path d="M108,454 L292,454" fill="none" stroke={p.shadow2} strokeWidth="6" strokeLinecap="round" opacity="0.7" />
-      {/* ハイライト */}
-      <rect x="110" y="96" width="180" height="358" rx="4" fill={`url(#${id}-hl)`} />
-      {designUrl && placement !== 'back' && (
-        <image href={designUrl} x={dp.x} y={dp.y} width={dp.w} height={dp.h} preserveAspectRatio="xMidYMid meet" />
+      <path d="M140,312 C140,300 154,294 200,294 C246,294 260,300 260,312 L260,378 C260,388 246,392 200,392 C154,392 140,388 140,378 Z"
+        fill={p.inner} stroke={p.seam} strokeWidth="1.2" />
+      <line x1="200" y1="294" x2="200" y2="392" stroke={p.seam} strokeWidth="1" />
+
+      {/* 縫い目 */}
+      <line x1="148" y1="100" x2="108" y2="116" stroke={p.seam} strokeWidth="1" />
+      <line x1="252" y1="100" x2="292" y2="116" stroke={p.seam} strokeWidth="1" />
+      <line x1="108" y1="116" x2="112" y2="176" stroke={p.seam} strokeWidth="1" />
+      <line x1="292" y1="116" x2="288" y2="176" stroke={p.seam} strokeWidth="1" />
+      <line x1="112" y1="176" x2="108" y2="456" stroke={p.seam} strokeWidth="1" />
+      <line x1="288" y1="176" x2="292" y2="456" stroke={p.seam} strokeWidth="1" />
+
+      {/* カフス */}
+      <path d="M14,404 L48,420" stroke={p.rib} strokeWidth="10" strokeLinecap="round" />
+      <path d="M386,404 L352,420" stroke={p.rib} strokeWidth="10" strokeLinecap="round" />
+      <path d="M14,404 L48,420" stroke={p.outline} strokeWidth="2" strokeLinecap="round" />
+      <path d="M386,404 L352,420" stroke={p.outline} strokeWidth="2" strokeLinecap="round" />
+
+      {/* 裾リブ */}
+      <rect x="108" y="440" width="184" height="16" fill={p.rib} />
+      <line x1="108" y1="440" x2="292" y2="440" stroke={p.outline} strokeWidth="1.8" />
+      <line x1="108" y1="456" x2="292" y2="456" stroke={p.outline} strokeWidth="1.8" />
+
+      {showDesign && (
+        <image href={designUrl!} x={dp.x} y={dp.y} width={dp.w} height={dp.h}
+          preserveAspectRatio="xMidYMid meet" clipPath={`url(#${id}-c)`} />
+      )}
+      {!showDesign && placement === 'back' && (
+        <text x="200" y="310" textAnchor="middle" fontSize="11" fill={p.label}
+          fontFamily="sans-serif" letterSpacing="3">BACK</text>
       )}
     </svg>
   )
 }
 
 // ─── メインエクスポート ──────────────────────────────────────
-export function ProductMockup({ bodyType, color, designUrl, placement = 'front', className = '' }: Props) {
+export function ProductMockup({ bodyType, color, designUrl, placement = 'front', patternId, className = '' }: Props) {
   const p  = PALETTE[color]
   const pl = placement as 'front' | 'one_point' | 'back'
-  const id = `${bodyType}-${color}`
-  const bg = color === 'black' ? 'bg-zinc-600' : color === 'gray' ? 'bg-zinc-300' : 'bg-zinc-200'
+  const id = `pm-${bodyType}-${color}`
+  const bg = color === 'black' ? 'bg-zinc-700' : color === 'gray' ? 'bg-zinc-400' : 'bg-zinc-300'
 
   return (
-    <div className={`${bg} rounded-2xl flex items-center justify-center ${className}`} style={{ padding: '5%' }}>
-      <div className="w-full max-w-[300px]" style={{ aspectRatio: bodyType === 'hoodie' ? '400/478' : '400/440' }}>
-        {bodyType === 'tshirt'      && <Tshirt     p={p} id={id} designUrl={designUrl} placement={pl} />}
-        {bodyType === 'long_sleeve' && <LongSleeve  p={p} id={id} designUrl={designUrl} placement={pl} />}
-        {bodyType === 'sweatshirt'  && <Sweatshirt  p={p} id={id} designUrl={designUrl} placement={pl} />}
-        {bodyType === 'hoodie'      && <Hoodie      p={p} id={id} designUrl={designUrl} placement={pl} />}
+    <div className={`${bg} rounded-2xl flex items-center justify-center ${className}`} style={{ padding: '6%' }}>
+      <div className="w-full max-w-[300px]"
+        style={{ aspectRatio: bodyType === 'hoodie' ? '400/480' : '400/440' }}>
+        {bodyType === 'tshirt'      && <Tshirt     p={p} id={id} designUrl={designUrl} placement={pl} patternId={patternId} bodyType={bodyType} />}
+        {bodyType === 'long_sleeve' && <LongSleeve p={p} id={id} designUrl={designUrl} placement={pl} patternId={patternId} bodyType={bodyType} />}
+        {bodyType === 'sweatshirt'  && <Sweatshirt p={p} id={id} designUrl={designUrl} placement={pl} patternId={patternId} bodyType={bodyType} />}
+        {bodyType === 'hoodie'      && <Hoodie     p={p} id={id} designUrl={designUrl} placement={pl} patternId={patternId} bodyType={bodyType} />}
       </div>
     </div>
   )

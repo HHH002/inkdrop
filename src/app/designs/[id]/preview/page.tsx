@@ -42,6 +42,7 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
   const size       = searchParams.get('size')        as Size
   const placement  = searchParams.get('placement')   as Placement
   const print_size = searchParams.get('print_size')  as PrintSize
+  const pattern_id = searchParams.get('pattern_id') ?? undefined
 
   const [design, setDesign] = useState<Design | null>(null)
   const [loading, setLoading] = useState(true)
@@ -108,6 +109,7 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
           color={color}
           designUrl={design.transparent_image_url ?? design.image_url}
           placement={mockupPlacement}
+          patternId={pattern_id}
           className="aspect-square"
         />
       </div>
