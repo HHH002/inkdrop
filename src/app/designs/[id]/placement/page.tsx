@@ -79,7 +79,7 @@ const TEXT_IDS = new Set<string>(['AT1','AT2','AT3','CT1','CT3','CT4','BT1','BT2
 interface Zone { x: number; y: number; w: number; h: number }
 
 function TshirtSVG({
-  side, design, text, textMark, designUrl, designName,
+  side, design, text, textMark, designUrl, designName, bodyType, color,
 }: {
   side: 'front' | 'back'
   design?: Zone
@@ -87,29 +87,34 @@ function TshirtSVG({
   textMark?: { x: number; y: number }
   designUrl?: string | null
   designName?: string | null
+  bodyType?: BodyType
+  color?: ProductColor
 }) {
-  // 本体アウトライン: 衿左(28,28)→上部曲線→衿右(72,28)→右肩→右袖先→右脇→右裾→左裾→左脇→左袖先→左肩→閉じ
-  const BODY = 'M28,28 C34,18 66,18 72,28 L84,30 L98,50 L82,46 L82,110 L18,110 L18,46 L2,50 L16,30 Z'
-  // 衿バンド塗り（外カーブ〜内カーブで囲んだ帯）
-  const COL_FILL_F = 'M28,28 C34,18 66,18 72,28 C66,42 34,42 28,28 Z'
-  const COL_FILL_B = 'M28,28 C34,18 66,18 72,28 C66,35 34,35 28,28 Z'
-  // 衿内縁ライン
-  const COL_LINE_F = 'M28,28 C34,42 66,42 72,28'
-  const COL_LINE_B = 'M28,28 C34,35 66,35 72,28'
+  // 実写モックアップ写真を背景に使用
+  const photoSrc = bodyType && color
+    ? `/mockups/${bodyType}_${color}_${side}.png`
+    : null
 
   return (
-    <svg viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-      <path d={BODY} fill="#FFFFFF" stroke="#C8C8C8" strokeWidth="1.3" strokeLinejoin="round" />
-      <path d={side === 'front' ? COL_FILL_F : COL_FILL_B} fill="#E8E8E8" stroke="none" />
-      <path d={side === 'front' ? COL_LINE_F : COL_LINE_B} stroke="#C8C8C8" strokeWidth="0.9" fill="none" />
-      {/* 袖口ライン */}
-      <line x1="2"  y1="50" x2="18" y2="46" stroke="#C8C8C8" strokeWidth="0.9" />
-      <line x1="98" y1="50" x2="82" y2="46" stroke="#C8C8C8" strokeWidth="0.9" />
-      {/* 裾ライン */}
-      <line x1="18" y1="107" x2="82" y2="107" stroke="#C8C8C8" strokeWidth="0.8" />
-
-      {side === 'back' && !design && !text && !textMark && (
-        <text x="50" y="76" textAnchor="middle" fontSize="7" fill="#C8C8C8" fontFamily="sans-serif" letterSpacing="1">BACK</text>
+    <svg viewBox="0 0 100 115" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      {/* 実写背景 or フォールバックSVG */}
+      {photoSrc ? (
+        <image href={photoSrc} x="0" y="0" width="100" height="115"
+          preserveAspectRatio="xMidYMid meet" />
+      ) : (
+        <>
+          <path d="M18,30 L2,34 L0,54 L18,50 L18,110 L82,110 L82,50 L100,54 L98,34 L82,30 Z"
+            fill="#FFFFFF" stroke="#C5C5C5" strokeWidth="1.2" strokeLinejoin="round" />
+          <ellipse cx="50" cy="28" rx="16" ry="9" fill="#E6E6E6" stroke="#C5C5C5" strokeWidth="1" />
+          <path d={side === 'front' ? 'M34,28 C38,40 62,40 66,28 C62,22 38,22 34,28 Z' : 'M34,28 C38,33 62,33 66,28 C62,22 38,22 34,28 Z'} fill="white" />
+          <path d={side === 'front' ? 'M34,28 C38,40 62,40 66,28' : 'M34,28 C38,33 62,33 66,28'} stroke="#C5C5C5" strokeWidth="0.8" fill="none" />
+          <line x1="0" y1="54" x2="18" y2="50" stroke="#C5C5C5" strokeWidth="0.9" />
+          <line x1="100" y1="54" x2="82" y2="50" stroke="#C5C5C5" strokeWidth="0.9" />
+          <line x1="18" y1="107" x2="82" y2="107" stroke="#C5C5C5" strokeWidth="0.8" />
+          {side === 'back' && !design && !text && !textMark && (
+            <text x="50" y="78" textAnchor="middle" fontSize="7" fill="#C5C5C5" fontFamily="sans-serif" letterSpacing="1">BACK</text>
+          )}
+        </>
       )}
 
       {/* デザインエリア */}
@@ -157,39 +162,41 @@ function getTshirtProps(id: string): Parameters<typeof TshirtSVG>[0] {
   switch (id) {
     // フロント デザイン
     case 'none':      return { side: 'front' }
-    case 'A':         return { side: 'front', design: { x: 22, y: 48, w: 16, h: 16 } }
-    case 'C1':        return { side: 'front', design: { x: 34, y: 52, w: 32, h: 24 } }
-    case 'C2':        return { side: 'front', design: { x: 18, y: 46, w: 64, h: 36 } }
+    case 'A':         return { side: 'front', design: { x: 22, y: 50, w: 16, h: 16 } }
+    case 'C1':        return { side: 'front', design: { x: 34, y: 54, w: 32, h: 24 } }
+    case 'C2':        return { side: 'front', design: { x: 18, y: 48, w: 64, h: 36 } }
     // フロント テキスト
-    case 'AT1':       return { side: 'front', textMark: { x: 30, y: 54 } }
-    case 'AT2':       return { side: 'front', textMark: { x: 64, y: 70 } }
-    case 'AT3':       return { side: 'front', textMark: { x: 66, y: 86 } }
-    case 'CT1':       return { side: 'front', textMark: { x: 50, y: 72 } }
+    case 'AT1':       return { side: 'front', textMark: { x: 30, y: 56 } }
+    case 'AT2':       return { side: 'front', textMark: { x: 66, y: 72 } }
+    case 'AT3':       return { side: 'front', textMark: { x: 68, y: 88 } }
+    case 'CT1':       return { side: 'front', textMark: { x: 50, y: 74 } }
     // フロント デザイン+テキスト
-    case 'CT3':       return { side: 'front', text: { x: 18, y: 44, w: 64, h: 8 }, design: { x: 18, y: 54, w: 64, h: 34 } }
-    case 'CT4':       return { side: 'front', design: { x: 18, y: 44, w: 64, h: 34 }, text: { x: 18, y: 80, w: 64, h: 8 } }
+    case 'CT3':       return { side: 'front', text: { x: 18, y: 46, w: 64, h: 8 }, design: { x: 18, y: 56, w: 64, h: 34 } }
+    case 'CT4':       return { side: 'front', design: { x: 18, y: 46, w: 64, h: 34 }, text: { x: 18, y: 82, w: 64, h: 8 } }
     // バック デザイン
     case 'none-back': return { side: 'back' }
-    case 'B1':        return { side: 'back',  design: { x: 39, y: 40, w: 22, h: 54 } }
+    case 'B1':        return { side: 'back',  design: { x: 39, y: 42, w: 22, h: 54 } }
     case 'B2':        return { side: 'back',  design: { x: 18, y: 62, w: 64, h: 26 } }
     // バック テキスト
-    case 'BT1':       return { side: 'back',  textMark: { x: 50, y: 48 } }
-    case 'BT2':       return { side: 'back',  textMark: { x: 50, y: 68 } }
-    case 'BT3':       return { side: 'back',  textMark: { x: 50, y: 88 } }
+    case 'BT1':       return { side: 'back',  textMark: { x: 50, y: 50 } }
+    case 'BT2':       return { side: 'back',  textMark: { x: 50, y: 70 } }
+    case 'BT3':       return { side: 'back',  textMark: { x: 50, y: 90 } }
     // バック デザイン+テキスト
-    case 'D1':        return { side: 'back',  design: { x: 39, y: 38, w: 22, h: 48 }, text: { x: 18, y: 90, w: 64, h: 10 } }
-    case 'D2':        return { side: 'back',  design: { x: 39, y: 36, w: 22, h: 46 }, text: { x: 14, y: 86, w: 72, h: 14 } }
-    case 'D3':        return { side: 'back',  design: { x: 18, y: 56, w: 64, h: 26 }, text: { x: 28, y: 86, w: 44, h: 10 } }
-    case 'D4':        return { side: 'back',  design: { x: 18, y: 54, w: 64, h: 26 }, text: { x: 14, y: 84, w: 72, h: 14 } }
+    case 'D1':        return { side: 'back',  design: { x: 39, y: 40, w: 22, h: 48 }, text: { x: 18, y: 92, w: 64, h: 10 } }
+    case 'D2':        return { side: 'back',  design: { x: 39, y: 38, w: 22, h: 46 }, text: { x: 14, y: 88, w: 72, h: 14 } }
+    case 'D3':        return { side: 'back',  design: { x: 18, y: 56, w: 64, h: 24 }, text: { x: 28, y: 84, w: 44, h: 10 } }
+    case 'D4':        return { side: 'back',  design: { x: 18, y: 54, w: 64, h: 24 }, text: { x: 14, y: 82, w: 72, h: 14 } }
     default:          return { side: 'front' }
   }
 }
 
 // ── 配置カード ────────────────────────────────────────────────
 function PlacementCard({
-  svgId, label, desc, isSelected, onClick, designUrl, designName,
+  svgId, label, desc, isSelected, onClick, designUrl, designName, bodyType, color,
 }: {
-  svgId: string; label: string; desc: string; isSelected: boolean; onClick: () => void; designUrl?: string | null; designName?: string | null
+  svgId: string; label: string; desc: string; isSelected: boolean; onClick: () => void
+  designUrl?: string | null; designName?: string | null
+  bodyType?: BodyType; color?: ProductColor
 }) {
   return (
     <button
@@ -199,7 +206,7 @@ function PlacementCard({
       }`}
     >
       <div className="w-full aspect-square mb-2">
-        <TshirtSVG {...getTshirtProps(svgId)} designUrl={designUrl} designName={designName} />
+        <TshirtSVG {...getTshirtProps(svgId)} designUrl={designUrl} designName={designName} bodyType={bodyType} color={color} />
       </div>
       <p className={`w-full text-[11px] font-semibold leading-tight ${isSelected ? 'text-blue-600' : 'text-gray-800'}`}>
         {label}
@@ -425,7 +432,7 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
               <PlacementCard key={opt.id} svgId={opt.id} label={opt.label} desc={opt.desc}
                 isSelected={selectedFront === opt.id}
                 onClick={() => setSelectedFront(opt.id)}
-                designUrl={designImageUrl} designName={designName} />
+                designUrl={designImageUrl} designName={designName} bodyType={bodyType} color={color} />
             ))}
           </div>
 
@@ -435,7 +442,7 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
               <PlacementCard key={opt.id} svgId={opt.id} label={opt.label} desc={opt.desc}
                 isSelected={selectedFront === opt.id}
                 onClick={() => setSelectedFront(selectedFront === opt.id ? 'none' : opt.id)}
-                designUrl={designImageUrl} designName={designName} />
+                designUrl={designImageUrl} designName={designName} bodyType={bodyType} color={color} />
             ))}
           </div>
 
@@ -445,7 +452,7 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
               <PlacementCard key={opt.id} svgId={opt.id} label={opt.label} desc={opt.desc}
                 isSelected={selectedFront === opt.id}
                 onClick={() => setSelectedFront(selectedFront === opt.id ? 'none' : opt.id)}
-                designUrl={designImageUrl} designName={designName} />
+                designUrl={designImageUrl} designName={designName} bodyType={bodyType} color={color} />
             ))}
           </div>
         </section>
@@ -464,7 +471,7 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
                 label={opt.label} desc={opt.desc}
                 isSelected={selectedBack === opt.id}
                 onClick={() => setSelectedBack(opt.id)}
-                designUrl={designImageUrl} designName={designName} />
+                designUrl={designImageUrl} designName={designName} bodyType={bodyType} color={color} />
             ))}
           </div>
 
@@ -474,7 +481,7 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
               <PlacementCard key={opt.id} svgId={opt.id} label={opt.label} desc={opt.desc}
                 isSelected={selectedBack === opt.id}
                 onClick={() => setSelectedBack(selectedBack === opt.id ? 'none' : opt.id)}
-                designUrl={designImageUrl} designName={designName} />
+                designUrl={designImageUrl} designName={designName} bodyType={bodyType} color={color} />
             ))}
           </div>
 
@@ -484,7 +491,7 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
               <PlacementCard key={opt.id} svgId={opt.id} label={opt.label} desc={opt.desc}
                 isSelected={selectedBack === opt.id}
                 onClick={() => setSelectedBack(selectedBack === opt.id ? 'none' : opt.id)}
-                designUrl={designImageUrl} designName={designName} />
+                designUrl={designImageUrl} designName={designName} bodyType={bodyType} color={color} />
             ))}
           </div>
         </section>
