@@ -78,45 +78,56 @@ const TEXT_IDS = new Set<string>(['AT1','AT2','AT3','CT1','CT3','CT4','BT1','BT2
 // ── TシャツSVGプレビュー ─────────────────────────────────────
 interface Zone { x: number; y: number; w: number; h: number }
 
+// ProductMockup と同じフラットスタイル (viewBox 0 0 100 120)
+// Body path: ProductMockup tshirt path を 400×440 → 100×120 にスケール
+const SHIRT_BODY = 'M39,18 C40,10 60,10 61,18 L70,22 L91,27 L87,44 L71,39 L71,108 L29,108 L30,39 L13,44 L10,27 L30,22 Z'
+// 衿（前: U字深め、後ろ: 浅め）
+const COLLAR_FILL_F = 'M39,18 C40,10 60,10 61,18 C56,29 44,29 39,18 Z'
+const COLLAR_FILL_B = 'M39,18 C40,10 60,10 61,18 C59,23 41,23 39,18 Z'
+const COLLAR_LINE_F = 'M39,18 C44,29 56,29 61,18'
+const COLLAR_LINE_B = 'M39,18 C41,23 59,23 61,18'
+
 function TshirtSVG({
   side, design, text, textMark, designUrl, designName,
 }: {
   side: 'front' | 'back'
   design?: Zone
   text?: Zone
-  textMark?: { x: number; y: number; size?: number }
+  textMark?: { x: number; y: number }
   designUrl?: string | null
   designName?: string | null
 }) {
-  const BODY  = 'M28,22 L14,14 L0,20 L8,46 L22,42 L22,100 L78,100 L78,42 L92,46 L100,20 L86,14 L72,22'
-  const COLF  = 'C68,32 32,32 28,22'
-  const COLB  = 'C68,28 32,28 28,22'
-  const collar = side === 'front' ? COLF : COLB
-
   return (
-    <svg viewBox="0 0 100 110" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-      <path d={`${BODY} ${collar} Z`} fill="#F3F4F6" stroke="#D1D5DB" strokeWidth="1.5" strokeLinejoin="round" />
-      <path d={`M28,22 ${collar}`} fill="#E5E7EB" stroke="#D1D5DB" strokeWidth="1" />
-      <line x1="22" y1="42" x2="8"  y2="46" stroke="#D1D5DB" strokeWidth="0.8" />
-      <line x1="78" y1="42" x2="92" y2="46" stroke="#D1D5DB" strokeWidth="0.8" />
-      <line x1="22" y1="42" x2="22" y2="100" stroke="#D1D5DB" strokeWidth="0.6" strokeDasharray="2,2" />
-      <line x1="78" y1="42" x2="78" y2="100" stroke="#D1D5DB" strokeWidth="0.6" strokeDasharray="2,2" />
+    <svg viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      {/* 本体 */}
+      <path d={SHIRT_BODY} fill="#F9FAFB" stroke="#D1D5DB" strokeWidth="1.2" strokeLinejoin="round" />
+      {/* 衿エリア */}
+      <path d={side === 'front' ? COLLAR_FILL_F : COLLAR_FILL_B} fill="#E5E7EB" />
+      <path d={side === 'front' ? COLLAR_LINE_F : COLLAR_LINE_B} stroke="#D1D5DB" strokeWidth="0.9" fill="none" />
+      {/* 袖付け線 */}
+      <line x1="30" y1="39" x2="13" y2="44" stroke="#D1D5DB" strokeWidth="0.7" />
+      <line x1="71" y1="39" x2="87" y2="44" stroke="#D1D5DB" strokeWidth="0.7" />
+      {/* サイドステッチ */}
+      <line x1="30" y1="39" x2="29" y2="108" stroke="#D1D5DB" strokeWidth="0.5" strokeDasharray="2,2" />
+      <line x1="71" y1="39" x2="71" y2="108" stroke="#D1D5DB" strokeWidth="0.5" strokeDasharray="2,2" />
+      {/* 裾ライン */}
+      <line x1="29" y1="105" x2="71" y2="105" stroke="#D1D5DB" strokeWidth="0.6" />
 
       {side === 'back' && !design && !text && !textMark && (
-        <text x="50" y="68" textAnchor="middle" fontSize="7" fill="#9CA3AF" fontFamily="sans-serif" letterSpacing="1">BACK</text>
+        <text x="50" y="72" textAnchor="middle" fontSize="7" fill="#C4C4C4" fontFamily="sans-serif" letterSpacing="1">BACK</text>
       )}
 
       {/* デザインエリア */}
       {design && !designUrl && (
         <rect x={design.x} y={design.y} width={design.w} height={design.h}
-          fill="rgba(34,197,94,0.25)" stroke="#16A34A" strokeWidth="1.2" rx="2" />
+          fill="rgba(34,197,94,0.22)" stroke="#16A34A" strokeWidth="1.1" rx="2" />
       )}
       {design && designUrl && (
         <>
           <image href={designUrl} x={design.x} y={design.y} width={design.w} height={design.h}
             preserveAspectRatio="xMidYMid meet" />
           <rect x={design.x} y={design.y} width={design.w} height={design.h}
-            fill="none" stroke="#16A34A" strokeWidth="1" rx="2" />
+            fill="none" stroke="#16A34A" strokeWidth="0.8" rx="2" />
         </>
       )}
 
@@ -124,10 +135,10 @@ function TshirtSVG({
       {text && (
         <>
           <rect x={text.x} y={text.y} width={text.w} height={text.h}
-            fill="rgba(34,197,94,0.15)" stroke="#16A34A" strokeWidth="1" rx="1" strokeDasharray="3,2" />
-          <text x={text.x + text.w / 2} y={text.y + text.h / 2 + 2.5}
-            textAnchor="middle" fontSize="4.5" fontWeight="700" fill="#16A34A" fontFamily="sans-serif">
-            {designName ? designName.slice(0, 12) : 'TEXT'}
+            fill="rgba(34,197,94,0.15)" stroke="#16A34A" strokeWidth="0.9" rx="1" strokeDasharray="3,2" />
+          <text x={text.x + text.w / 2} y={text.y + text.h / 2 + 2}
+            textAnchor="middle" fontSize="4" fontWeight="700" fill="#16A34A" fontFamily="sans-serif">
+            {designName ? designName.slice(0, 14) : 'TEXT'}
           </text>
         </>
       )}
@@ -135,11 +146,11 @@ function TshirtSVG({
       {/* テキストマーク（テキストのみパターン） */}
       {textMark && (
         <>
-          <rect x={textMark.x - 16} y={textMark.y - 5} width="32" height="8"
-            fill="rgba(34,197,94,0.15)" stroke="#16A34A" strokeWidth="1" rx="1" strokeDasharray="3,2" />
-          <text x={textMark.x} y={textMark.y}
-            textAnchor="middle" fontSize="4.5" fontWeight="700" fill="#16A34A" fontFamily="sans-serif">
-            {designName ? designName.slice(0, 12) : 'TEXT'}
+          <rect x={textMark.x - 17} y={textMark.y - 4} width="34" height="8"
+            fill="rgba(34,197,94,0.15)" stroke="#16A34A" strokeWidth="0.9" rx="1" strokeDasharray="3,2" />
+          <text x={textMark.x} y={textMark.y + 1}
+            textAnchor="middle" fontSize="4" fontWeight="700" fill="#16A34A" fontFamily="sans-serif">
+            {designName ? designName.slice(0, 14) : 'TEXT'}
           </text>
         </>
       )}
@@ -151,30 +162,30 @@ function getTshirtProps(id: string): Parameters<typeof TshirtSVG>[0] {
   switch (id) {
     // フロント デザイン
     case 'none':      return { side: 'front' }
-    case 'A':         return { side: 'front', design: { x: 26, y: 36, w: 14, h: 14 } }
-    case 'C1':        return { side: 'front', design: { x: 35, y: 46, w: 30, h: 24 } }
-    case 'C2':        return { side: 'front', design: { x: 27, y: 40, w: 46, h: 36 } }
+    case 'A':         return { side: 'front', design: { x: 31, y: 26, w: 12, h: 12 } }
+    case 'C1':        return { side: 'front', design: { x: 36, y: 34, w: 28, h: 22 } }
+    case 'C2':        return { side: 'front', design: { x: 29, y: 27, w: 42, h: 32 } }
     // フロント テキスト
-    case 'AT1':       return { side: 'front', textMark: { x: 32, y: 44 } }
-    case 'AT2':       return { side: 'front', textMark: { x: 58, y: 58 } }
-    case 'AT3':       return { side: 'front', textMark: { x: 62, y: 70 } }
-    case 'CT1':       return { side: 'front', textMark: { x: 50, y: 60 } }
+    case 'AT1':       return { side: 'front', textMark: { x: 36, y: 34 } }
+    case 'AT2':       return { side: 'front', textMark: { x: 62, y: 60 } }
+    case 'AT3':       return { side: 'front', textMark: { x: 63, y: 76 } }
+    case 'CT1':       return { side: 'front', textMark: { x: 50, y: 62 } }
     // フロント デザイン+テキスト
-    case 'CT3':       return { side: 'front', text: { x: 27, y: 38, w: 46, h: 7  }, design: { x: 27, y: 47, w: 46, h: 32 } }
-    case 'CT4':       return { side: 'front', design: { x: 27, y: 38, w: 46, h: 30 }, text: { x: 27, y: 71, w: 46, h: 7  } }
+    case 'CT3':       return { side: 'front', text: { x: 29, y: 25, w: 42, h: 7 }, design: { x: 29, y: 34, w: 42, h: 28 } }
+    case 'CT4':       return { side: 'front', design: { x: 29, y: 25, w: 42, h: 28 }, text: { x: 29, y: 55, w: 42, h: 7 } }
     // バック デザイン
     case 'none-back': return { side: 'back' }
-    case 'B1':        return { side: 'back',  design: { x: 40, y: 32, w: 20, h: 44 } }
-    case 'B2':        return { side: 'back',  design: { x: 26, y: 50, w: 48, h: 22 } }
+    case 'B1':        return { side: 'back',  design: { x: 39, y: 26, w: 22, h: 52 } }
+    case 'B2':        return { side: 'back',  design: { x: 27, y: 48, w: 46, h: 24 } }
     // バック テキスト
-    case 'BT1':       return { side: 'back',  textMark: { x: 50, y: 38 } }
-    case 'BT2':       return { side: 'back',  textMark: { x: 50, y: 56 } }
-    case 'BT3':       return { side: 'back',  textMark: { x: 50, y: 72 } }
+    case 'BT1':       return { side: 'back',  textMark: { x: 50, y: 36 } }
+    case 'BT2':       return { side: 'back',  textMark: { x: 50, y: 58 } }
+    case 'BT3':       return { side: 'back',  textMark: { x: 50, y: 78 } }
     // バック デザイン+テキスト
-    case 'D1':        return { side: 'back',  design: { x: 40, y: 28, w: 20, h: 36 }, text: { x: 30, y: 68, w: 40, h:  9 } }
-    case 'D2':        return { side: 'back',  design: { x: 40, y: 26, w: 20, h: 34 }, text: { x: 26, y: 64, w: 48, h: 13 } }
-    case 'D3':        return { side: 'back',  design: { x: 26, y: 44, w: 48, h: 20 }, text: { x: 34, y: 68, w: 32, h:  9 } }
-    case 'D4':        return { side: 'back',  design: { x: 26, y: 42, w: 48, h: 20 }, text: { x: 26, y: 66, w: 48, h: 13 } }
+    case 'D1':        return { side: 'back',  design: { x: 39, y: 24, w: 22, h: 44 }, text: { x: 29, y: 72, w: 42, h:  9 } }
+    case 'D2':        return { side: 'back',  design: { x: 39, y: 22, w: 22, h: 42 }, text: { x: 25, y: 68, w: 50, h: 13 } }
+    case 'D3':        return { side: 'back',  design: { x: 27, y: 42, w: 46, h: 22 }, text: { x: 34, y: 68, w: 32, h:  9 } }
+    case 'D4':        return { side: 'back',  design: { x: 27, y: 40, w: 46, h: 22 }, text: { x: 25, y: 66, w: 50, h: 13 } }
     default:          return { side: 'front' }
   }
 }
