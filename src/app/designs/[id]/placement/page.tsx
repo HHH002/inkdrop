@@ -382,7 +382,7 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
     selectedBack !== 'none' ? selectedBack : undefined
 
   return (
-    <div className="min-h-dvh bg-gray-50 pb-32">
+    <div className="min-h-dvh bg-white pb-32">
 
       {/* ヘッダー */}
       <header className="sticky top-0 z-40 bg-white border-b border-gray-100">

@@ -87,7 +87,7 @@ export default function PayoutPage() {
   }
 
   return (
-    <div className="min-h-dvh bg-gray-50">
+    <div className="min-h-dvh bg-white">
       <header className="sticky top-0 z-40 bg-white border-b border-gray-100 px-2 h-12 flex items-center gap-2">
         <Link href="/earnings" className="p-2"><ChevronLeft size={22} /></Link>
         <h1 className="text-base font-semibold">振込申請</h1>

@@ -140,7 +140,7 @@ export default function HomePage() {
                                       'デザインがありません'
 
   return (
-    <div className="bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5] min-h-dvh">
+    <div className="bg-white min-h-dvh">
       <HomeHeader />
 
       {/* タブ */}

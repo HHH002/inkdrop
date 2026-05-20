@@ -54,7 +54,7 @@ export default function RankingPage() {
   }, [type, period])
 
   return (
-    <div className="bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5] min-h-dvh">
+    <div className="bg-white min-h-dvh">
 
       {/* ヘッダー */}
       <header className="sticky top-0 z-40 bg-white border-b border-gray-100 px-4 h-12 flex items-center">
