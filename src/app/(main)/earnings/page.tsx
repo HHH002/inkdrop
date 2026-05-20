@@ -85,7 +85,7 @@ export default function EarningsPage() {
   }, [period])
 
   return (
-    <div className="min-h-dvh bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5]">
+    <div className="min-h-dvh bg-gray-50">
       <header className="sticky top-0 z-40 bg-white border-b border-gray-100 px-4 h-12 flex items-center">
         <h1 className="text-base font-semibold">収益</h1>
       </header>

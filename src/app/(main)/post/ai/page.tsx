@@ -130,7 +130,7 @@ export default function AiPostPage() {
   }
 
   return (
-    <div className="min-h-dvh bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5] flex flex-col">
+    <div className="min-h-dvh bg-white flex flex-col">
       <header className="sticky top-0 z-40 bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5] border-b border-gray-100 px-2 h-12 flex items-center gap-2">
         <Link href="/post" className="p-2">
           <ChevronLeft size={22} />

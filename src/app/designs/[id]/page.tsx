@@ -123,7 +123,7 @@ export default function DesignDetailPage({ params }: { params: Promise<{ id: str
   }
 
   return (
-    <div className="min-h-dvh bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5] pb-36">
+    <div className="min-h-dvh bg-white pb-36">
 
       {/* ヘッダー */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-gray-100 px-2 h-12 flex items-center justify-between">

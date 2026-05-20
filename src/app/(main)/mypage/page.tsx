@@ -74,7 +74,7 @@ export default function MyPage() {
   if (loading || !user) return <LoadingSpinner className="py-32" />
 
   return (
-    <div className="min-h-dvh bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5]">
+    <div className="min-h-dvh bg-white">
 
       {/* ヘッダー */}
       <header className="sticky top-0 z-40 bg-white border-b border-gray-100 px-4 h-12 flex items-center justify-between">

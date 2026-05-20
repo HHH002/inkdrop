@@ -65,7 +65,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
   const isSelf = currentUserId === user.id
 
   return (
-    <div className="min-h-dvh bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5]">
+    <div className="min-h-dvh bg-white">
       <header className="sticky top-0 z-40 bg-white border-b border-gray-100 px-2 h-12 flex items-center gap-2">
         <button onClick={() => router.back()} className="p-2"><ChevronLeft size={22} /></button>
         <h1 className="text-base font-black">{user.name}</h1>

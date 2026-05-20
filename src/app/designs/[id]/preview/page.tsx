@@ -87,7 +87,7 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
   const price = BODY_TYPE_PRICES[body_type]
 
   return (
-    <div className="min-h-dvh bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5] pb-40">
+    <div className="min-h-dvh bg-white pb-40">
 
       {/* ヘッダー */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-gray-100 px-2 h-12 flex items-center gap-2">
