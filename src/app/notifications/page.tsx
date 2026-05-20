@@ -43,10 +43,10 @@ export default function NotificationsPage() {
   }, [])
 
   return (
-    <div className="min-h-dvh bg-white">
+    <div className="min-h-dvh bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5]">
       <header className="sticky top-0 z-40 bg-white border-b border-gray-100 px-2 h-12 flex items-center gap-2">
         <Link href="/" className="p-2"><ChevronLeft size={22} /></Link>
-        <h1 className="text-base font-semibold">通知</h1>
+        <h1 className="text-base font-black">通知</h1>
       </header>
 
       {error ? <ErrorScreen message="取得に失敗しました" /> :
@@ -54,10 +54,11 @@ export default function NotificationsPage() {
        notifications.length === 0 ? (
         <div className="py-20 text-center text-sm text-gray-400">通知はありません</div>
       ) : (
-        <ul className="divide-y divide-gray-100">
+        <ul className="divide-y divide-gray-50 bg-white mt-3 mx-3 rounded-2xl overflow-hidden">
           {notifications.map((n) => (
-            <li key={n.id} className="px-5 py-4">
-              <p className="text-sm font-medium">{n.message}</p>
+            <li key={n.id} className={`px-5 py-4 ${!n.read ? 'bg-white' : ''}`}>
+              {!n.read && <span className="inline-block w-1.5 h-1.5 bg-black rounded-full mr-2 mb-0.5 align-middle" />}
+              <span className="text-sm font-medium">{n.message}</span>
               <p className="text-[10px] text-gray-400 mt-1">{formatDateTime(n.created_at)}</p>
             </li>
           ))}

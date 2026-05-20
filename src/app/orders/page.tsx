@@ -15,7 +15,7 @@ import {
 import { formatPrice, formatDate } from '@/lib/utils'
 
 const STATUS_COLOR: Record<string, string> = {
-  order_confirmed: 'bg-blue-50 text-blue-700',
+  order_confirmed: 'bg-gray-100 text-gray-700',
   in_production: 'bg-yellow-50 text-yellow-700',
   shipped: 'bg-green-50 text-green-700',
   delivered: 'bg-gray-100 text-gray-700',
@@ -49,7 +49,7 @@ export default function OrdersPage() {
   }, [])
 
   return (
-    <div className="min-h-dvh bg-white">
+    <div className="min-h-dvh bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5]">
       <header className="sticky top-0 z-40 bg-white border-b border-gray-100 px-2 h-12 flex items-center gap-2">
         <Link href="/mypage" className="p-2"><ChevronLeft size={22} /></Link>
         <h1 className="text-base font-semibold">注文履歴</h1>
@@ -62,8 +62,8 @@ export default function OrdersPage() {
       ) : (
         <div className="divide-y divide-gray-100">
           {orders.map((o) => (
-            <Link href={`/orders/${o.id}`} key={o.id} className="flex items-center gap-3 px-4 py-3 active:bg-gray-50">
-              <div className="w-16 h-16 bg-gray-50 rounded-lg overflow-hidden shrink-0">
+            <Link href={`/orders/${o.id}`} key={o.id} className="flex items-center gap-3 px-4 py-3 active:bg-white">
+              <div className="w-16 h-16 bg-white rounded-lg overflow-hidden shrink-0">
                 {o.design && (
                   <Image
                     src={o.design.transparent_image_url ?? o.design.image_url}

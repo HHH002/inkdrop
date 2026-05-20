@@ -388,3 +388,15 @@ $$;
 
 create trigger on_design_sales_limit before update on public.designs
   for each row execute function public.handle_design_sales_limit();
+
+-- クリック数をアトミックにインクリメント（RLSをバイパス）
+create or replace function public.increment_design_click(design_id uuid)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  update public.designs
+  set click_count = click_count + 1
+  where id = design_id;
+$$;

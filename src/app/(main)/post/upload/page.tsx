@@ -168,7 +168,7 @@ export default function UploadPostPage() {
   }
 
   return (
-    <div className="min-h-dvh bg-white">
+    <div className="min-h-dvh bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5]">
       <header className="sticky top-0 z-40 bg-white border-b border-gray-100 px-2 h-12 flex items-center gap-2">
         <Link href="/post" className="p-2">
           <ChevronLeft size={22} />
@@ -183,7 +183,7 @@ export default function UploadPostPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">デザイン画像</label>
             <label
               htmlFor="file"
-              className="block aspect-square w-full bg-gray-50 rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden border-2 border-dashed border-gray-200 relative"
+              className="block aspect-square w-full bg-white rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden border-2 border-dashed border-gray-200 relative"
             >
               {(transparentUrl || previewUrl) ? (
                 <>
@@ -360,8 +360,8 @@ export default function UploadPostPage() {
 function ProcessingCard({ icon, title, subtitle, color }: {
   icon: string; title: string; subtitle: string; color: 'blue' | 'purple'
 }) {
-  const colors = { blue: 'bg-blue-50 border-blue-100 text-blue-900', purple: 'bg-purple-50 border-purple-100 text-purple-900' }
-  const spinColors = { blue: 'border-blue-300 border-t-blue-600', purple: 'border-purple-300 border-t-purple-600' }
+  const colors = { blue: 'bg-white border-gray-200 text-gray-900', purple: 'bg-white border-gray-200 text-gray-900' }
+  const spinColors = { blue: 'border-gray-300 border-t-black', purple: 'border-gray-300 border-t-black' }
   return (
     <div className={`border rounded-xl p-4 ${colors[color]}`}>
       <div className="flex items-center gap-3">

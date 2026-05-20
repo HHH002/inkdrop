@@ -123,7 +123,7 @@ export default function DesignDetailPage({ params }: { params: Promise<{ id: str
   }
 
   return (
-    <div className="min-h-dvh bg-white pb-36">
+    <div className="min-h-dvh bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5] pb-36">
 
       {/* ヘッダー */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-gray-100 px-2 h-12 flex items-center justify-between">
@@ -210,7 +210,7 @@ export default function DesignDetailPage({ params }: { params: Promise<{ id: str
           {carouselIndex > 0 && (
             <button
               onClick={() => setCarouselIndex(i => i - 1)}
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 backdrop-blur rounded-full flex items-center justify-center shadow-sm active:scale-95 transition-transform"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5]/80 backdrop-blur rounded-full flex items-center justify-center shadow-sm active:scale-95 transition-transform"
             >
               <ChevronLeft size={18} className="text-gray-700" />
             </button>
@@ -220,7 +220,7 @@ export default function DesignDetailPage({ params }: { params: Promise<{ id: str
           {carouselIndex < CAROUSEL_PATTERNS.length - 1 && (
             <button
               onClick={() => setCarouselIndex(i => i + 1)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 backdrop-blur rounded-full flex items-center justify-center shadow-sm active:scale-95 transition-transform"
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5]/80 backdrop-blur rounded-full flex items-center justify-center shadow-sm active:scale-95 transition-transform"
             >
               <ChevronRight size={18} className="text-gray-700" />
             </button>
@@ -284,7 +284,7 @@ export default function DesignDetailPage({ params }: { params: Promise<{ id: str
                 className={`py-3 rounded-2xl text-sm font-bold border-2 transition-all ${
                   bodyType === bt
                     ? 'border-black bg-black text-white'
-                    : 'border-gray-200 text-gray-600 bg-white'
+                    : 'border-gray-200 text-gray-600 bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5]'
                 }`}
               >
                 {BODY_TYPE_LABELS[bt]}
@@ -331,7 +331,7 @@ export default function DesignDetailPage({ params }: { params: Promise<{ id: str
                 className={`py-3 rounded-2xl text-sm font-bold border-2 transition-all ${
                   size === s
                     ? 'border-black bg-black text-white'
-                    : 'border-gray-200 text-gray-600 bg-white'
+                    : 'border-gray-200 text-gray-600 bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5]'
                 }`}
               >
                 {s}
@@ -346,7 +346,7 @@ export default function DesignDetailPage({ params }: { params: Promise<{ id: str
       </div>
 
       {/* 固定購入バー */}
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white/95 backdrop-blur border-t border-gray-100 px-4 py-4 z-40">
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5]/95 backdrop-blur border-t border-gray-100 px-4 py-4 z-40">
         <div className="flex items-center justify-between mb-3">
           <div>
             <p className="text-[11px] text-gray-400">送料無料（本土）</p>

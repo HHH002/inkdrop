@@ -85,7 +85,7 @@ export default function EarningsPage() {
   }, [period])
 
   return (
-    <div className="min-h-dvh bg-gray-50">
+    <div className="min-h-dvh bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5]">
       <header className="sticky top-0 z-40 bg-white border-b border-gray-100 px-4 h-12 flex items-center">
         <h1 className="text-base font-semibold">収益</h1>
       </header>
@@ -153,7 +153,7 @@ export default function EarningsPage() {
                 <div className="grid grid-cols-3 gap-2">
                   {ranking.map((r) => (
                     <div key={r.id} className="text-xs">
-                      <div className="aspect-square bg-gray-50 rounded-lg overflow-hidden mb-1">
+                      <div className="aspect-square bg-white rounded-lg overflow-hidden mb-1">
                         {r.design && (
                           <Image
                             src={r.design.transparent_image_url ?? r.design.image_url}

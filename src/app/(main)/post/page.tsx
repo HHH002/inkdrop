@@ -5,7 +5,7 @@ import { Sparkles, Upload } from 'lucide-react'
 
 export default function PostSelectPage() {
   return (
-    <div className="min-h-dvh bg-white">
+    <div className="min-h-dvh bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5]">
       <header className="sticky top-0 z-40 bg-white border-b border-gray-100 px-4 h-12 flex items-center">
         <h1 className="text-base font-semibold">投稿</h1>
       </header>
@@ -18,7 +18,7 @@ export default function PostSelectPage() {
 
         <Link
           href="/post/upload"
-          className="block bg-white border border-gray-200 rounded-2xl p-5 mb-4 active:bg-gray-50 transition-colors"
+          className="block bg-white border border-gray-200 rounded-2xl p-5 mb-4 active:bg-white transition-colors"
         >
           <div className="flex items-start gap-4">
             <div className="shrink-0 w-12 h-12 rounded-xl bg-black flex items-center justify-center">
@@ -35,7 +35,7 @@ export default function PostSelectPage() {
 
         <Link
           href="/post/ai"
-          className="block bg-white border border-gray-200 rounded-2xl p-5 active:bg-gray-50 transition-colors"
+          className="block bg-white border border-gray-200 rounded-2xl p-5 active:bg-white transition-colors"
         >
           <div className="flex items-start gap-4">
             <div className="shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">

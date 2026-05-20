@@ -56,7 +56,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const currentStep = STATUS_FLOW.indexOf(order.status)
 
   return (
-    <div className="min-h-dvh bg-white">
+    <div className="min-h-dvh bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5]">
       <header className="sticky top-0 z-40 bg-white border-b border-gray-100 px-2 h-12 flex items-center gap-2">
         <Link href="/orders" className="p-2"><ChevronLeft size={22} /></Link>
         <h1 className="text-base font-semibold">配送状況</h1>
@@ -99,7 +99,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       <div className="border-t border-gray-100 px-5 py-5">
         <h2 className="text-sm font-bold mb-3">注文内容</h2>
         <div className="flex gap-3 mb-4">
-          <div className="w-20 h-20 bg-gray-50 rounded-lg overflow-hidden">
+          <div className="w-20 h-20 bg-white rounded-lg overflow-hidden">
             {order.design && (
               <Image
                 src={order.design.transparent_image_url ?? order.design.image_url}
@@ -130,7 +130,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         </div>
       </div>
 
-      <div className="px-5 py-3 bg-gray-50">
+      <div className="px-5 py-3 bg-white">
         <p className="text-[11px] text-gray-500 leading-relaxed">
           受注生産品のため、キャンセル・返品はできません。
         </p>

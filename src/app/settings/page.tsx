@@ -33,7 +33,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-dvh bg-gray-50">
+    <div className="min-h-dvh bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5]">
       <header className="sticky top-0 z-40 bg-white border-b border-gray-100 px-2 h-12 flex items-center gap-2">
         <Link href="/mypage" className="p-2"><ChevronLeft size={22} /></Link>
         <h1 className="text-base font-semibold">設定</h1>
@@ -48,7 +48,7 @@ export default function SettingsPage() {
         <li>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-between px-5 py-4 text-left active:bg-gray-50"
+            className="w-full flex items-center justify-between px-5 py-4 text-left active:bg-white"
           >
             <span className="flex items-center gap-3">
               <LogOut size={18} className="text-gray-600" />
@@ -64,7 +64,7 @@ export default function SettingsPage() {
           <button
             onClick={handleWithdraw}
             disabled={withdrawing}
-            className="w-full flex items-center justify-between px-5 py-4 text-left active:bg-gray-50 disabled:opacity-50"
+            className="w-full flex items-center justify-between px-5 py-4 text-left active:bg-white disabled:opacity-50"
           >
             <span className="flex items-center gap-3">
               <UserX size={18} className="text-red-500" />
@@ -85,7 +85,7 @@ export default function SettingsPage() {
 function SettingItem({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
   return (
     <li>
-      <Link href={href} className="flex items-center justify-between px-5 py-4 active:bg-gray-50">
+      <Link href={href} className="flex items-center justify-between px-5 py-4 active:bg-white">
         <span className="flex items-center gap-3">
           <span className="text-gray-600">{icon}</span>
           <span className="text-sm">{label}</span>
