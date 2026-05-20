@@ -22,10 +22,10 @@ export function DesignCard({ design, rank, priority }: Props) {
     <Link
       href={`/designs/${design.id}`}
       onClick={handleClick}
-      className="block bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-[0_4px_20px_rgba(0,0,0,0.10)] active:scale-[0.98] transition-transform"
+      className="block bg-white rounded-2xl overflow-hidden border-2 border-gray-200 active:scale-[0.98] transition-transform"
     >
       {/* 画像エリア */}
-      <div className="aspect-square bg-[#F7F7F7] relative overflow-hidden">
+      <div className="aspect-square bg-white relative overflow-hidden">
         <Image
           src={design.transparent_image_url ?? design.image_url}
           alt={design.title}
@@ -63,7 +63,7 @@ export function DesignCard({ design, rank, priority }: Props) {
       </div>
 
       {/* クリエイター情報 */}
-      <div className="px-2.5 py-2 flex items-center gap-2">
+      <div className="px-2.5 py-2 flex items-center gap-2 bg-gray-50">
         <div className="w-5 h-5 rounded-full bg-gray-200 overflow-hidden shrink-0">
           {design.user?.avatar_url ? (
             <Image

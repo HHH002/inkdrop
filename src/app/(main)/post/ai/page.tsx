@@ -131,7 +131,7 @@ export default function AiPostPage() {
 
   return (
     <div className="min-h-dvh bg-white flex flex-col">
-      <header className="sticky top-0 z-40 bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5] border-b border-gray-100 px-2 h-12 flex items-center gap-2">
+      <header className="sticky top-0 z-40 bg-white border-b border-gray-100 px-2 h-12 flex items-center gap-2">
         <Link href="/post" className="p-2">
           <ChevronLeft size={22} />
         </Link>
@@ -147,7 +147,7 @@ export default function AiPostPage() {
           </p>
           <label
             htmlFor="aifile"
-            className="block aspect-square w-full bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5] rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden border-2 border-dashed border-gray-200"
+            className="block aspect-square w-full bg-white rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden border-2 border-dashed border-gray-200"
           >
             {originalPreview ? (
               <Image src={originalPreview} alt="プレビュー" width={400} height={400} className="w-full h-full object-contain" unoptimized />
@@ -171,8 +171,8 @@ export default function AiPostPage() {
 
       {step === 'chat' && (
         <>
-          <div className="px-4 py-3 bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5] border-b border-gray-100">
-            <div className="aspect-video bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5] rounded-xl overflow-hidden flex items-center justify-center">
+          <div className="px-4 py-3 bg-white border-b border-gray-100">
+            <div className="aspect-video bg-white rounded-xl overflow-hidden flex items-center justify-center">
               {aiResultUrl && (
                 <Image src={aiResultUrl} alt="AI補正" width={400} height={300} className="w-full h-full object-contain" unoptimized />
               )}
@@ -202,7 +202,7 @@ export default function AiPostPage() {
             )}
           </div>
 
-          <div className="border-t border-gray-100 px-3 py-2 space-y-2 bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5]">
+          <div className="border-t border-gray-100 px-3 py-2 space-y-2 bg-white">
             <div className="flex gap-2">
               <input
                 type="text"
