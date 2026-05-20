@@ -11,9 +11,9 @@ import type { Design } from '@/types'
 type Tab = 'latest' | 'following' | 'history'
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'latest', label: '新着' },
-  { id: 'following', label: 'フォロー中' },
-  { id: 'history', label: '閲覧履歴' },
+  { id: 'latest',    label: '新着'     },
+  { id: 'following', label: 'フォロー' },
+  { id: 'history',   label: '閲覧履歴' },
 ]
 
 const PAGE_SIZE = 30
@@ -37,10 +37,9 @@ export default function HomePage() {
   const fetchDesigns = useCallback(async (currentTab: Tab, currentPage: number) => {
     setLoading(true)
     setError(false)
-
     try {
       const from = currentPage * PAGE_SIZE
-      const to = from + PAGE_SIZE - 1
+      const to   = from + PAGE_SIZE - 1
 
       if (currentTab === 'latest') {
         const { data, error: err } = await supabase
@@ -50,20 +49,16 @@ export default function HomePage() {
           .eq('is_sales_stopped', false)
           .order('created_at', { ascending: false })
           .range(from, to)
-
         if (err) throw err
-        setDesigns((prev) => currentPage === 0 ? (data ?? []) : [...prev, ...(data ?? [])])
+        setDesigns(prev => currentPage === 0 ? (data ?? []) : [...prev, ...(data ?? [])])
         setHasMore((data?.length ?? 0) === PAGE_SIZE)
+
       } else if (currentTab === 'following') {
         if (!userId) { setDesigns([]); setLoading(false); return }
         const { data: follows } = await supabase
-          .from('follows')
-          .select('following_id')
-          .eq('follower_id', userId)
-
-        const ids = follows?.map((f) => f.following_id) ?? []
+          .from('follows').select('following_id').eq('follower_id', userId)
+        const ids = follows?.map(f => f.following_id) ?? []
         if (ids.length === 0) { setDesigns([]); setHasMore(false); setLoading(false); return }
-
         const { data, error: err } = await supabase
           .from('designs')
           .select('*, user:users(id,name,avatar_url)')
@@ -71,12 +66,11 @@ export default function HomePage() {
           .eq('copyright_status', 'approved')
           .order('created_at', { ascending: false })
           .range(from, to)
-
         if (err) throw err
-        setDesigns((prev) => currentPage === 0 ? (data ?? []) : [...prev, ...(data ?? [])])
+        setDesigns(prev => currentPage === 0 ? (data ?? []) : [...prev, ...(data ?? [])])
         setHasMore((data?.length ?? 0) === PAGE_SIZE)
+
       } else {
-        // 閲覧履歴
         if (!userId) { setDesigns([]); setLoading(false); return }
         const { data, error: err } = await supabase
           .from('views')
@@ -84,15 +78,14 @@ export default function HomePage() {
           .eq('user_id', userId)
           .order('created_at', { ascending: false })
           .range(from, to)
-
         if (err) throw err
         const unique = new Map<string, Design>()
-        data?.forEach((v) => {
+        data?.forEach(v => {
           const d = v.design as unknown as Design
           if (d && !unique.has(d.id)) unique.set(d.id, d)
         })
         const deduped = Array.from(unique.values())
-        setDesigns((prev) => currentPage === 0 ? deduped : [...prev, ...deduped])
+        setDesigns(prev => currentPage === 0 ? deduped : [...prev, ...deduped])
         setHasMore((data?.length ?? 0) === PAGE_SIZE)
       }
     } catch {
@@ -102,7 +95,6 @@ export default function HomePage() {
     }
   }, [userId])
 
-  // タブ切り替え時にリセット
   useEffect(() => {
     setDesigns([])
     setPage(0)
@@ -110,10 +102,26 @@ export default function HomePage() {
     fetchDesigns(tab, 0)
   }, [tab, userId])
 
-  // 無限スクロール
+  // 1秒ごとに裏で先頭だけ静かに更新（くるくるなし）
+  useEffect(() => {
+    const timer = setInterval(async () => {
+      try {
+        const { data } = await supabase
+          .from('designs')
+          .select('*, user:users(id,name,avatar_url)')
+          .eq('copyright_status', 'approved')
+          .eq('is_sales_stopped', false)
+          .order('created_at', { ascending: false })
+          .range(0, PAGE_SIZE - 1)
+        if (data) setDesigns(prev => [...(data as Design[]), ...prev.slice(PAGE_SIZE)])
+      } catch { /* noop */ }
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [tab])
+
   useEffect(() => {
     if (observerRef.current) observerRef.current.disconnect()
-    observerRef.current = new IntersectionObserver((entries) => {
+    observerRef.current = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting && hasMore && !loading) {
         const next = page + 1
         setPage(next)
@@ -124,39 +132,42 @@ export default function HomePage() {
     return () => observerRef.current?.disconnect()
   }, [hasMore, loading, page, tab, fetchDesigns])
 
+  const emptyMessage =
+    tab === 'following' && !userId  ? 'ログインするとフォロー中のデザインを見られます' :
+    tab === 'following'             ? 'フォロー中のデザインはありません' :
+    tab === 'history'   && !userId  ? 'ログインすると閲覧履歴が記録されます' :
+    tab === 'history'               ? '閲覧履歴がありません' :
+                                      'デザインがありません'
+
   return (
-    <div>
+    <div className="bg-gradient-to-b from-[#FDFCF8] via-[#F5F1EA] to-[#E8E0D5] min-h-dvh">
       <HomeHeader />
 
-      {/* タブ切り替え */}
-      <div className="flex border-b border-gray-100 bg-white sticky top-12 z-30">
+      {/* タブ */}
+      <div className="flex bg-white border-b border-gray-100 sticky top-12 z-30">
         {TABS.map(({ id, label }) => (
           <button
             key={id}
             onClick={() => setTab(id)}
-            className={`flex-1 py-3 text-sm font-medium transition-colors ${
-              tab === id
-                ? 'text-black border-b-2 border-black -mb-px'
-                : 'text-gray-400'
+            className={`flex-1 py-3 text-sm font-bold transition-colors relative ${
+              tab === id ? 'text-black' : 'text-gray-400'
             }`}
           >
             {label}
+            {tab === id && (
+              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-black rounded-full" />
+            )}
           </button>
         ))}
       </div>
 
-      {/* コンテンツ */}
       {error ? (
         <ErrorScreen message="データの取得に失敗しました" onRetry={() => fetchDesigns(tab, 0)} />
       ) : (
         <>
           {designs.length === 0 && !loading ? (
-            <div className="py-20 text-center text-sm text-gray-400">
-              {tab === 'following' && !userId ? 'ログインするとフォロー中のデザインを見られます' :
-               tab === 'following' ? 'フォローしているユーザーの投稿がありません' :
-               tab === 'history' && !userId ? 'ログインすると閲覧履歴が記録されます' :
-               tab === 'history' ? '閲覧履歴がありません' :
-               'デザインがありません'}
+            <div className="py-24 text-center">
+              <p className="text-sm text-gray-400">{emptyMessage}</p>
             </div>
           ) : (
             <DesignGrid designs={designs} />

@@ -10,13 +10,13 @@ export type PrintSize = 'small' | 'medium' | 'large'
 export const BODY_TYPE_LABELS: Record<BodyType, string> = {
   tshirt: 'Tシャツ',
   long_sleeve: 'ロンT',
-  hoodie: 'パーカー',
   sweatshirt: 'スウェット',
+  hoodie: 'パーカー',
 }
 
 export const BODY_TYPE_COLORS: Record<BodyType, ProductColor[]> = {
-  tshirt: ['white', 'black'],
-  long_sleeve: ['white', 'black'],
+  tshirt: ['black', 'white'],
+  long_sleeve: ['black', 'white'],
   hoodie: ['black', 'gray'],
   sweatshirt: ['black', 'gray'],
 }
@@ -290,7 +290,7 @@ export interface PurchaseConfig {
 // ランキング期間
 // ==============================
 export type RankingPeriod = 'daily' | 'weekly' | 'monthly' | 'all'
-export type RankingType = 'sales' | 'clicks' | 'purchases' | 'trending'
+export type RankingType = 'clicks' | 'purchases'
 
 export const RANKING_PERIOD_LABELS: Record<RankingPeriod, string> = {
   daily: '日間',
@@ -300,10 +300,8 @@ export const RANKING_PERIOD_LABELS: Record<RankingPeriod, string> = {
 }
 
 export const RANKING_TYPE_LABELS: Record<RankingType, string> = {
-  sales: '売上',
   clicks: 'クリック数',
   purchases: '購入数',
-  trending: '急上昇',
 }
 
 // ==============================

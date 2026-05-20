@@ -11,6 +11,7 @@ interface Props {
   placement?: 'front' | 'one_point' | 'back'
   patternId?: string
   className?: string
+  showFrame?: boolean
 }
 
 type Side = 'front' | 'back'
@@ -24,10 +25,10 @@ interface OverlayPos {
 
 // ── patternId → 面 + オーバーレイ位置（コンテナの%）────────────
 const PATTERN_POS: Record<string, { side: Side } & OverlayPos> = {
-  A:   { side: 'front', top: '26%', left: '26%', width: '19%',  aspectRatio: '1/1' },
+  A:   { side: 'front', top: '26%', left: '40%', width: '19%',  aspectRatio: '1/1' },
   C1:  { side: 'front', top: '27%', left: '22%', width: '56%',  aspectRatio: '1/1' },
   C2:  { side: 'front', top: '24%', left: '19%', width: '62%',  aspectRatio: '1/1' },
-  B1:  { side: 'back',  top: '22%', left: '22%', width: '56%',  aspectRatio: '1/1' },
+  B1:  { side: 'back',  top: '28%', left: '22%', width: '56%',  aspectRatio: '1/1' },
   B2:  { side: 'back',  top: '36%', left: '19%', width: '62%',  aspectRatio: '1/1' },
   AT1: { side: 'front', top: '26%', left: '25%', width: '22%',  aspectRatio: '3.2/1' },
   AT2: { side: 'front', top: '42%', left: '17%', width: '66%',  aspectRatio: '4.8/1' },
@@ -66,7 +67,7 @@ const PLACEMENT_POS: Record<'front' | 'one_point' | 'back', Record<BodyType, Ove
 }
 
 function getMockupSrc(bodyType: BodyType, color: ProductColor, side: Side): string {
-  return `/mockups/${bodyType}_${color}_${side}.png`
+  return `/design-cards/${bodyType}_${color}_${side}.png`
 }
 
 export function ProductMockup({
@@ -76,6 +77,7 @@ export function ProductMockup({
   placement = 'front',
   patternId,
   className = '',
+  showFrame = false,
 }: Props) {
   const pl = placement as 'front' | 'one_point' | 'back'
 
@@ -111,7 +113,7 @@ export function ProductMockup({
       />
 
       {/* デザインオーバーレイ */}
-      {designUrl && (
+      {designUrl ? (
         <div style={overlayStyle}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -120,7 +122,9 @@ export function ProductMockup({
             className="w-full h-full object-contain"
           />
         </div>
-      )}
+      ) : showFrame ? (
+        <div style={overlayStyle} className="border-2 border-dashed border-blue-400 rounded-sm" />
+      ) : null}
     </div>
   )
 }
