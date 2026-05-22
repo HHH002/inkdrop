@@ -2,21 +2,25 @@
 
 import { useState, use, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ChevronLeft, ImagePlus, Check } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ImagePlus, Check, Loader2 } from 'lucide-react'
 import type { BodyType, ProductColor, Size } from '@/types'
 import { ProductMockup } from '@/components/design/ProductMockup'
+import { removeBackground } from '@imgly/background-removal'
 
 // ── 型定義 ───────────────────────────────────────────────────
-type FrontOption = 'none' | 'A' | 'C1' | 'C2' | 'AT1' | 'AT2' | 'AT3' | 'CT1' | 'CT3' | 'CT4'
-type BackOption  = 'none' | 'B1' | 'B2' | 'BT1' | 'BT2' | 'BT3' | 'D1' | 'D2' | 'D3' | 'D4'
+type FrontOption = 'none' | 'A' | 'A2' | 'A3' | 'C1' | 'C2' | 'C3' | 'AT1' | 'AT2' | 'AT3' | 'CT1' | 'F1' | 'F2'
+type BackOption  = 'none' | 'B1' | 'B2' | 'BT1' | 'BT2' | 'BT3' | 'D1' | 'D2' | 'E1' | 'E2'
 type FontOption  = 'gothic' | 'square' | 'mincho' | 'handwritten' | 'classic'
 
 // ── 配置データ ───────────────────────────────────────────────
 const FRONT_DESIGN: { id: FrontOption; code: string; label: string }[] = [
-  { id: 'none', code: 'なし',   label: '配置なし'         },
-  { id: 'A',    code: 'A',      label: 'ワンポイント'      },
-  { id: 'C1',   code: 'C-1',    label: 'フロント スモール' },
-  { id: 'C2',   code: 'C-2',    label: 'フロント ビッグ'  },
+  { id: 'none', code: 'なし',   label: '配置なし'           },
+  { id: 'A',    code: 'A-1',    label: 'ワンポイント'        },
+  { id: 'A2',   code: 'A-2',    label: 'ビックワンポイント'  },
+  { id: 'A3',   code: 'A-3',    label: 'オリジナルロゴ追加用' },
+  { id: 'C1',   code: 'C-1',    label: 'フロント スモール'   },
+  { id: 'C2',   code: 'C-2',    label: 'フロント ビッグ'    },
+  { id: 'C3',   code: 'C-3',    label: 'フロント 縦長'      },
 ]
 const FRONT_TEXT: { id: FrontOption; code: string; label: string }[] = [
   { id: 'AT1', code: 'A.T-1', label: 'ワンポイント位置' },
@@ -25,8 +29,8 @@ const FRONT_TEXT: { id: FrontOption; code: string; label: string }[] = [
   { id: 'CT1', code: 'C.T-1', label: 'フロント中央'    },
 ]
 const FRONT_COMBO: { id: FrontOption; code: string; label: string }[] = [
-  { id: 'CT3', code: 'C.T-3', label: 'C-2＋テキスト上' },
-  { id: 'CT4', code: 'C.T-4', label: 'C-2＋テキスト下' },
+  { id: 'F1', code: 'F-1', label: 'フロント＋テキスト上' },
+  { id: 'F2', code: 'F-2', label: 'フロント＋テキスト下' },
 ]
 
 const BACK_DESIGN: { id: BackOption; code: string; label: string }[] = [
@@ -40,10 +44,10 @@ const BACK_TEXT: { id: BackOption; code: string; label: string }[] = [
   { id: 'BT3', code: 'B.T-3', label: '背面 下部テキスト' },
 ]
 const BACK_COMBO: { id: BackOption; code: string; label: string }[] = [
-  { id: 'D1', code: 'D-1', label: '縦長＋テキスト 小' },
-  { id: 'D2', code: 'D-2', label: '縦長＋テキスト 大' },
-  { id: 'D3', code: 'D-3', label: '横長＋テキスト 小' },
-  { id: 'D4', code: 'D-4', label: '横長＋テキスト 大' },
+  { id: 'D1', code: 'D-1', label: '縦長＋テキスト 小'       },
+  { id: 'D2', code: 'D-2', label: '縦長＋テキスト 大'       },
+  { id: 'E1', code: 'E-1', label: 'バック横長＋テキスト下'  },
+  { id: 'E2', code: 'E-2', label: 'バック横長＋テキスト上'  },
 ]
 
 const FONT_OPTIONS: { id: FontOption; label: string }[] = [
@@ -66,7 +70,7 @@ const TEXT_COLORS = [
   { hex: '#6B7280', label: 'グレー'  },
 ]
 
-const TEXT_IDS = new Set<string>(['AT1','AT2','AT3','CT1','CT3','CT4','BT1','BT2','BT3','D1','D2','D3','D4'])
+const TEXT_IDS = new Set<string>(['AT1','AT2','AT3','CT1','F1','F2','BT1','BT2','BT3','D1','D2','E1','E2'])
 
 // ── TシャツSVGプレビュー ──────────────────────────────────────
 interface Zone { x: number; y: number; w: number; h: number }
@@ -143,14 +147,17 @@ function getTshirtProps(id: string): Parameters<typeof TshirtSVG>[0] {
   switch (id) {
     case 'none':      return { side: 'front' }
     case 'A':         return { side: 'front', design: { x: 62, y: 50, w: 16, h: 16 } }
+    case 'A2':        return { side: 'front', design: { x: 54, y: 44, w: 28, h: 28 } }
+    case 'A3':        return { side: 'front', design: { x: 54, y: 44, w: 28, h: 28 } }
     case 'C1':        return { side: 'front', design: { x: 34, y: 54, w: 32, h: 24 } }
     case 'C2':        return { side: 'front', design: { x: 18, y: 48, w: 64, h: 36 } }
+    case 'C3':        return { side: 'front', design: { x: 36, y: 46, w: 28, h: 54 } }
     case 'AT1':       return { side: 'front', textMark: { x: 30, y: 56 } }
     case 'AT2':       return { side: 'front', textMark: { x: 50, y: 72 } }
     case 'AT3':       return { side: 'front', textMark: { x: 68, y: 88 } }
     case 'CT1':       return { side: 'front', textMark: { x: 50, y: 74 } }
-    case 'CT3':       return { side: 'front', text: { x: 18, y: 46, w: 64, h: 8 }, design: { x: 18, y: 56, w: 64, h: 34 } }
-    case 'CT4':       return { side: 'front', design: { x: 18, y: 46, w: 64, h: 34 }, text: { x: 18, y: 82, w: 64, h: 8 } }
+    case 'F1':        return { side: 'front', text: { x: 18, y: 46, w: 64, h: 8 }, design: { x: 18, y: 56, w: 64, h: 34 } }
+    case 'F2':        return { side: 'front', design: { x: 18, y: 46, w: 64, h: 34 }, text: { x: 18, y: 82, w: 64, h: 8 } }
     case 'none-back': return { side: 'back' }
     case 'B1':        return { side: 'back',  design: { x: 36, y: 30, w: 28, h: 66 } }
     case 'B2':        return { side: 'back',  design: { x: 18, y: 50, w: 64, h: 36 } }
@@ -159,8 +166,8 @@ function getTshirtProps(id: string): Parameters<typeof TshirtSVG>[0] {
     case 'BT3':       return { side: 'back',  textMark: { x: 50, y: 90 } }
     case 'D1':        return { side: 'back',  design: { x: 39, y: 30, w: 22, h: 54 }, text: { x: 18, y: 88, w: 64, h: 10 } }
     case 'D2':        return { side: 'back',  design: { x: 36, y: 28, w: 28, h: 52 }, text: { x: 14, y: 84, w: 72, h: 14 } }
-    case 'D3':        return { side: 'back',  text: { x: 18, y: 38, w: 64, h: 10 }, design: { x: 18, y: 50, w: 64, h: 36 } }
-    case 'D4':        return { side: 'back',  design: { x: 18, y: 50, w: 64, h: 36 }, text: { x: 14, y: 90, w: 72, h: 14 } }
+    case 'E1':        return { side: 'back',  design: { x: 18, y: 50, w: 64, h: 36 }, text: { x: 18, y: 88, w: 64, h: 10 } }
+    case 'E2':        return { side: 'back',  text: { x: 18, y: 38, w: 64, h: 10 }, design: { x: 18, y: 50, w: 64, h: 36 } }
     default:          return { side: 'front' }
   }
 }
@@ -168,6 +175,7 @@ function getTshirtProps(id: string): Parameters<typeof TshirtSVG>[0] {
 // ── 配置カード（2列・大型） ───────────────────────────────────
 function PlacementCard({
   svgId, code, label, isSelected, onClick, designUrl, bodyType, color,
+  textValue, textFont, textColor, textOutline, outlineColor, textZoneLogoUrl,
 }: {
   svgId: string
   code: string
@@ -177,7 +185,19 @@ function PlacementCard({
   designUrl?: string | null
   bodyType?: BodyType
   color?: ProductColor
+  textValue?: string
+  textFont?: string
+  textColor?: string
+  textOutline?: boolean
+  outlineColor?: string
+  textZoneLogoUrl?: string | null
 }) {
+  const bt: BodyType       = bodyType ?? 'tshirt'
+  const cl: ProductColor   = color    ?? 'white'
+  const isNone             = svgId === 'none' || svgId === 'none-back'
+  const patternId          = isNone ? undefined : svgId
+  const placementFallback  = svgId === 'none-back' ? 'back' : 'front'
+
   return (
     <button
       onClick={onClick}
@@ -187,13 +207,22 @@ function PlacementCard({
           : 'border-gray-200 active:border-gray-400'
       }`}
     >
-      {/* プレビューエリア */}
-      <div className="w-full aspect-[4/5] bg-white overflow-hidden">
-        <TshirtSVG
-          {...getTshirtProps(svgId)}
-          designUrl={designUrl}
-          bodyType={bodyType}
-          color={color}
+      {/* モックアップ写真プレビュー */}
+      <div className="w-full aspect-square overflow-hidden">
+        <ProductMockup
+          bodyType={bt}
+          color={cl}
+          designUrl={patternId ? designUrl : null}
+          patternId={patternId}
+          placement={placementFallback}
+          showFrame={!!patternId}
+          className="w-full h-full"
+          textValue={textValue}
+          textZoneLogoUrl={textZoneLogoUrl}
+          textFont={textFont}
+          textColor={textColor}
+          textOutline={textOutline}
+          outlineColor={outlineColor}
         />
       </div>
 
@@ -309,18 +338,59 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
   const designImageUrl = sp.get('image_url')   ?? null
   const designName     = sp.get('design_name') ?? null
 
-  const [selectedFront, setSelectedFront] = useState<FrontOption>('none')
-  const [selectedBack,  setSelectedBack]  = useState<BackOption>('none')
-  const [textValue,     setTextValue]     = useState(designName ?? '')
-  const [selectedFont,  setSelectedFont]  = useState<FontOption>('gothic')
-  const [textOutline,   setTextOutline]   = useState(false)
-  const [textColor,     setTextColor]     = useState('#000000')
-  const [outlineColor,  setOutlineColor]  = useState('#FFFFFF')
-  const [myLogoImage,   setMyLogoImage]   = useState<string | null>(null)
-  const [activeTab,     setActiveTab]     = useState<'front' | 'back'>('front')
+  const [selectedFront,    setSelectedFront]    = useState<FrontOption>('none')
+  const [selectedBack,     setSelectedBack]     = useState<BackOption>('none')
+  // フロントテキスト設定
+  const [textFront,        setTextFront]        = useState(designName ?? '')
+  const [useFrontLogo,     setUseFrontLogo]     = useState(false)
+  const [logoFront,        setLogoFront]        = useState<string | null>(null)
+  // バックテキスト設定
+  const [textBack,         setTextBack]         = useState('')
+  const [useBackLogo,      setUseBackLogo]      = useState(false)
+  const [logoBack,         setLogoBack]         = useState<string | null>(null)
+  const [backSameAsFront,  setBackSameAsFront]  = useState(false)
+  // 共通テキストスタイル
+  const [selectedFont,     setSelectedFont]     = useState<FontOption>('gothic')
+  const [textOutline,      setTextOutline]      = useState(false)
+  const [textColor,        setTextColor]        = useState('#000000')
+  const [outlineColor,     setOutlineColor]     = useState('#FFFFFF')
+  // A3 用ロゴ（デザインゾーン）
+  const [myLogoImage,      setMyLogoImage]      = useState<string | null>(null)
+  const [activeTab,        setActiveTab]        = useState<'front' | 'back'>('front')
+  const [previewSide,      setPreviewSide]      = useState<'front' | 'back'>('front')
 
-  const hasPrintSelection = selectedFront !== 'none' || selectedBack !== 'none'
-  const hasTextSetting    = TEXT_IDS.has(selectedFront) || TEXT_IDS.has(selectedBack)
+  // バックの実効値（「フロントと同じ」チェック時はフロントの値を使用）
+  const effectiveBackText    = backSameAsFront ? textFront    : textBack
+  const effectiveUseBackLogo = backSameAsFront ? useFrontLogo : useBackLogo
+  const effectiveBackLogo    = backSameAsFront ? logoFront    : logoBack
+
+  const hasPrintSelection    = selectedFront !== 'none' || selectedBack !== 'none'
+  const showFrontTextSection = TEXT_IDS.has(selectedFront)
+  const showBackTextSection  = TEXT_IDS.has(selectedBack)
+
+  // テキスト入力ヘルパー（2行 × 各20文字まで）
+  function clampText(val: string): string {
+    return val.split('\n').slice(0, 2).map(l => l.slice(0, 20)).join('\n')
+  }
+
+  const [removingBgFront, setRemovingBgFront] = useState(false)
+  const [removingBgBack,  setRemovingBgBack]  = useState(false)
+
+  const frontLogoRef = useRef<HTMLInputElement>(null)
+  const backLogoRef  = useRef<HTMLInputElement>(null)
+
+  async function removeBgAndSet(file: File, setter: (url: string) => void, setLoading: (v: boolean) => void) {
+    setLoading(true)
+    try {
+      const blob = await removeBackground(file)
+      setter(URL.createObjectURL(blob))
+    } catch {
+      // 透過失敗時はそのまま表示
+      setter(URL.createObjectURL(file))
+    } finally {
+      setLoading(false)
+    }
+  }
 
   function handleLogoFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -332,14 +402,17 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
     if (!hasPrintSelection) return
     const placementMap: Record<string, { placement: string; print_size: string }> = {
       A:   { placement: 'one_point', print_size: 'small'  },
+      A2:  { placement: 'one_point', print_size: 'medium' },
+      A3:  { placement: 'one_point', print_size: 'medium' },
       C1:  { placement: 'front',     print_size: 'medium' },
       C2:  { placement: 'front',     print_size: 'large'  },
+      C3:  { placement: 'front',     print_size: 'large'  },
       AT1: { placement: 'one_point', print_size: 'small'  },
       AT2: { placement: 'front',     print_size: 'small'  },
       AT3: { placement: 'front',     print_size: 'small'  },
       CT1: { placement: 'front',     print_size: 'medium' },
-      CT3: { placement: 'front',     print_size: 'large'  },
-      CT4: { placement: 'front',     print_size: 'large'  },
+      F1:  { placement: 'front',     print_size: 'large'  },
+      F2:  { placement: 'front',     print_size: 'large'  },
       B1:  { placement: 'back',      print_size: 'large'  },
       B2:  { placement: 'back',      print_size: 'medium' },
       BT1: { placement: 'back',      print_size: 'small'  },
@@ -347,8 +420,8 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
       BT3: { placement: 'back',      print_size: 'small'  },
       D1:  { placement: 'back',      print_size: 'large'  },
       D2:  { placement: 'back',      print_size: 'large'  },
-      D3:  { placement: 'back',      print_size: 'medium' },
-      D4:  { placement: 'back',      print_size: 'medium' },
+      E1:  { placement: 'back',      print_size: 'medium' },
+      E2:  { placement: 'back',      print_size: 'medium' },
     }
     const primary = placementMap[selectedFront] ?? placementMap[selectedBack]
     if (!primary) return
@@ -362,19 +435,27 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
     const patternId = selectedFront !== 'none' ? selectedFront : selectedBack
     if (patternId !== 'none') p.set('pattern_id', patternId)
     if (designImageUrl) p.set('image_url', designImageUrl)
-    if (hasTextSetting && textValue) {
-      p.set('text',          textValue)
-      p.set('font',          selectedFont)
-      p.set('text_color',    textColor)
-      p.set('text_outline',  textOutline ? 'yes' : 'no')
-      p.set('outline_color', outlineColor)
-    }
+    // テキスト・ロゴ設定を sessionStorage で引き渡す
+    sessionStorage.setItem('inkdrop_preview', JSON.stringify({
+      selectedFront,
+      selectedBack,
+      textFront,
+      textBack:      effectiveBackText,
+      useFrontLogo,
+      useBackLogo:   effectiveUseBackLogo,
+      logoFront,
+      logoBack:      effectiveBackLogo,
+      selectedFont,
+      textColor,
+      textOutline,
+      outlineColor,
+    }))
     router.push(`/designs/${id}/preview?${p.toString()}`)
   }
 
   // ライブプレビュー用
   const activePlacement: 'front' | 'one_point' | 'back' =
-    selectedFront === 'A' ? 'one_point' :
+    (selectedFront === 'A' || selectedFront === 'A2' || selectedFront === 'A3') ? 'one_point' :
     selectedFront !== 'none' ? 'front' :
     selectedBack !== 'none' ? 'back' : 'front'
   const activePatternId =
@@ -398,27 +479,78 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
       {/* ライブプレビュー */}
       {designImageUrl && bodyType && color && (
         <div className="px-4 pt-4 pb-2">
-          <div className="bg-white rounded-3xl overflow-hidden shadow-sm">
-            <ProductMockup
-              bodyType={bodyType}
-              color={color}
-              designUrl={designImageUrl}
-              placement={activePlacement}
-              patternId={activePatternId}
-              className="aspect-square"
-            />
+          <div className="relative bg-white rounded-3xl overflow-hidden shadow-sm">
+            {/* 左矢印 */}
+            <button
+              onClick={() => setPreviewSide(s => s === 'front' ? 'back' : 'front')}
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full shadow-md flex items-center justify-center text-gray-600 active:scale-95 transition-transform"
+            >
+              <ChevronLeft size={16} strokeWidth={2.5} />
+            </button>
+            {/* 右矢印 */}
+            <button
+              onClick={() => setPreviewSide(s => s === 'front' ? 'back' : 'front')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full shadow-md flex items-center justify-center text-gray-600 active:scale-95 transition-transform"
+            >
+              <ChevronRight size={16} strokeWidth={2.5} />
+            </button>
+
+            {(() => {
+              const curPattern = previewSide === 'front' ? selectedFront : selectedBack
+              // テキストのみパターン（デザイン画像不要）
+              const TEXT_ONLY_PATTERNS = new Set(['AT1','AT2','AT3','CT1','BT1','BT2','BT3'])
+              // ロゴゾーン（myLogoImageを使用）
+              const isLogoPattern  = curPattern === 'A3'
+              const isTextOnly     = TEXT_ONLY_PATTERNS.has(curPattern)
+              const previewDesignUrl =
+                curPattern === 'none' ? null :
+                isLogoPattern  ? myLogoImage :
+                isTextOnly     ? null :
+                designImageUrl
+
+              return (
+                <ProductMockup
+                  bodyType={bodyType}
+                  color={color}
+                  designUrl={previewDesignUrl}
+                  patternId={curPattern !== 'none' ? curPattern : undefined}
+                  placement={previewSide === 'back' ? 'back' : activePlacement}
+                  className="aspect-square"
+                  textValue={
+                    !(previewSide === 'front' ? useFrontLogo : effectiveUseBackLogo)
+                      ? (previewSide === 'front' ? textFront : effectiveBackText) || undefined
+                      : undefined
+                  }
+                  textZoneLogoUrl={
+                    (previewSide === 'front' ? useFrontLogo : effectiveUseBackLogo)
+                      ? (previewSide === 'front' ? logoFront : effectiveBackLogo)
+                      : null
+                  }
+                  textFont={selectedFont}
+                  textColor={textColor}
+                  textOutline={textOutline}
+                  outlineColor={outlineColor}
+                />
+              )
+            })()}
+
+            {/* フロント/バック インジケーター */}
+            <div className="absolute bottom-2.5 left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
+              <div className={`w-1.5 h-1.5 rounded-full transition-colors ${previewSide === 'front' ? 'bg-gray-700' : 'bg-gray-300'}`} />
+              <div className={`w-1.5 h-1.5 rounded-full transition-colors ${previewSide === 'back'  ? 'bg-gray-700' : 'bg-gray-300'}`} />
+            </div>
           </div>
-          {hasPrintSelection && (
-            <p className="text-center text-[11px] text-gray-400 font-medium mt-2">
-              {selectedFront !== 'none'
-                ? [...FRONT_DESIGN, ...FRONT_TEXT, ...FRONT_COMBO].find(o => o.id === selectedFront)?.code ?? ''
-                : [...BACK_DESIGN, ...BACK_TEXT, ...BACK_COMBO].find(o => o.id === selectedBack)?.code ?? ''}
-              {' '}
-              {selectedFront !== 'none'
-                ? [...FRONT_DESIGN, ...FRONT_TEXT, ...FRONT_COMBO].find(o => o.id === selectedFront)?.label ?? ''
-                : [...BACK_DESIGN, ...BACK_TEXT, ...BACK_COMBO].find(o => o.id === selectedBack)?.label ?? ''}
-            </p>
-          )}
+
+          {/* ラベル */}
+          <p className="text-center text-[11px] text-gray-400 font-medium mt-2">
+            <span className="font-bold text-gray-500">{previewSide === 'front' ? 'FRONT' : 'BACK'}</span>
+            {hasPrintSelection && (() => {
+              const opt = previewSide === 'front'
+                ? [...FRONT_DESIGN, ...FRONT_TEXT, ...FRONT_COMBO].find(o => o.id === selectedFront && selectedFront !== 'none')
+                : [...BACK_DESIGN,  ...BACK_TEXT,  ...BACK_COMBO ].find(o => o.id === selectedBack  && selectedBack  !== 'none')
+              return opt ? <> · {opt.code} {opt.label}</> : null
+            })()}
+          </p>
         </div>
       )}
 
@@ -428,7 +560,7 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
           {(['front', 'back'] as const).map(tab => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => { setActiveTab(tab); setPreviewSide(tab) }}
               className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
                 activeTab === tab
                   ? 'bg-black text-white shadow-sm'
@@ -462,10 +594,15 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
                     code={opt.code}
                     label={opt.label}
                     isSelected={selectedFront === opt.id}
-                    onClick={() => setSelectedFront(opt.id)}
-                    designUrl={designImageUrl}
+                    onClick={() => { setSelectedFront(opt.id); if (opt.id !== 'none') setPreviewSide('front') }}
+                    designUrl={opt.id === 'A3' ? myLogoImage : designImageUrl}
                     bodyType={bodyType}
                     color={color}
+                    textValue={textFront || undefined}
+                    textFont={selectedFont}
+                    textColor={textColor}
+                    textOutline={textOutline}
+                    outlineColor={outlineColor}
                   />
                 ))}
               </div>
@@ -481,10 +618,16 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
                     code={opt.code}
                     label={opt.label}
                     isSelected={selectedFront === opt.id}
-                    onClick={() => setSelectedFront(selectedFront === opt.id ? 'none' : opt.id)}
+                    onClick={() => { const next = selectedFront === opt.id ? 'none' : opt.id; setSelectedFront(next); if (next !== 'none') setPreviewSide('front') }}
                     designUrl={designImageUrl}
                     bodyType={bodyType}
                     color={color}
+                    textValue={!useFrontLogo ? textFront || undefined : undefined}
+                    textZoneLogoUrl={useFrontLogo ? logoFront : null}
+                    textFont={selectedFont}
+                    textColor={textColor}
+                    textOutline={textOutline}
+                    outlineColor={outlineColor}
                   />
                 ))}
               </div>
@@ -500,14 +643,160 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
                     code={opt.code}
                     label={opt.label}
                     isSelected={selectedFront === opt.id}
-                    onClick={() => setSelectedFront(selectedFront === opt.id ? 'none' : opt.id)}
+                    onClick={() => { const next = selectedFront === opt.id ? 'none' : opt.id; setSelectedFront(next); if (next !== 'none') setPreviewSide('front') }}
                     designUrl={designImageUrl}
                     bodyType={bodyType}
                     color={color}
+                    textValue={!useFrontLogo ? textFront || undefined : undefined}
+                    textZoneLogoUrl={useFrontLogo ? logoFront : null}
+                    textFont={selectedFont}
+                    textColor={textColor}
+                    textOutline={textOutline}
+                    outlineColor={outlineColor}
                   />
                 ))}
               </div>
             </section>
+
+            {/* ── フロント テキスト設定（テキストパターン選択時のみ）── */}
+            {showFrontTextSection && (
+              <section className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                {/* ヘッダー */}
+                <div className="px-4 pt-4 pb-3 border-b border-gray-100">
+                  <p className="text-sm font-black text-gray-900">テキスト設定</p>
+                </div>
+
+                {/* テキスト入力 */}
+                <div className="px-4 pt-3 pb-3 border-b border-gray-100">
+                  <div className="relative">
+                    <textarea
+                      rows={textFront.includes('\n') ? 2 : 1}
+                      value={textFront}
+                      onChange={e => setTextFront(clampText(e.target.value))}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && textFront.split('\n').length >= 2) e.preventDefault()
+                      }}
+                      disabled={useFrontLogo}
+                      placeholder="テキストを入力（Enterで改行）"
+                      className={`w-full px-4 py-3 pr-14 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/10 transition-all resize-none leading-relaxed ${useFrontLogo ? 'opacity-40 cursor-not-allowed bg-gray-50' : ''}`}
+                    />
+                    <span className="absolute right-3.5 bottom-3.5 text-[10px] text-gray-400 tabular-nums leading-tight text-right pointer-events-none">
+                      {textFront.split('\n').map((l, i) => <span key={i} className="block">{l.length}/20</span>)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* マイロゴ チェックボックス + アップロード */}
+                <div className="px-4 pt-3 pb-3 border-b border-gray-100 space-y-3">
+                  <label className="flex items-center gap-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={useFrontLogo}
+                      onChange={e => setUseFrontLogo(e.target.checked)}
+                      className="w-4 h-4 rounded accent-black cursor-pointer"
+                    />
+                    <span className="text-xs font-bold text-gray-700">マイロゴ（テキストの代わりに使用）</span>
+                  </label>
+                  {useFrontLogo && (
+                    <>
+                      <button
+                        onClick={() => frontLogoRef.current?.click()}
+                        disabled={removingBgFront}
+                        className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-200 rounded-xl text-sm font-bold text-gray-500 bg-white active:bg-gray-50 transition-colors disabled:opacity-50"
+                      >
+                        <ImagePlus size={16} className="text-gray-400" />
+                        ロゴを読み込む（横長推奨）
+                      </button>
+                      <input ref={frontLogoRef} type="file" accept="image/*" className="hidden"
+                        onChange={e => { const f = e.target.files?.[0]; if (f) removeBgAndSet(f, setLogoFront, setRemovingBgFront) }} />
+                      {removingBgFront && (
+                        <div className="flex items-center justify-center gap-2 py-3 text-xs text-gray-500">
+                          <Loader2 size={14} className="animate-spin" />
+                          背景を透過しています…
+                        </div>
+                      )}
+                      {logoFront && !removingBgFront && (
+                        <div className="relative">
+                          <div className="w-full h-20 bg-gray-50 rounded-xl overflow-hidden border border-gray-200 flex items-center justify-center p-2">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={logoFront} alt="マイロゴ" className="max-w-full max-h-full object-contain" />
+                          </div>
+                          <button onClick={() => setLogoFront(null)}
+                            className="absolute top-1.5 right-1.5 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center text-[10px] font-bold">✕</button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                {/* フォント */}
+                <div className="px-4 pt-3 pb-3 border-b border-gray-100">
+                  <p className="text-xs font-bold text-gray-500 mb-2.5">フォント</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {FONT_OPTIONS.map(f => (
+                      <button key={f.id} onClick={() => setSelectedFont(f.id)}
+                        className={`py-2.5 rounded-xl text-xs font-bold border-2 transition-all ${
+                          selectedFont === f.id ? 'border-black bg-black text-white' : 'border-gray-200 bg-white text-gray-600'
+                        }`}>{f.label}</button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 文字のふち */}
+                <div className="px-4 pt-3 pb-3 border-b border-gray-100">
+                  <p className="text-xs font-bold text-gray-500 mb-2.5">文字のふち</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[{ v: false, l: 'なし' }, { v: true, l: 'あり' }].map(o => (
+                      <button key={String(o.v)} onClick={() => setTextOutline(o.v)}
+                        className={`py-2.5 rounded-xl text-xs font-bold border-2 transition-all ${
+                          textOutline === o.v ? 'border-black bg-black text-white' : 'border-gray-200 bg-white text-gray-600'
+                        }`}>{o.l}</button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* テキストカラー */}
+                <div className={`px-4 pt-3 pb-3 ${textOutline ? 'border-b border-gray-100' : ''}`}>
+                  <p className="text-xs font-bold text-gray-500 mb-2.5">テキストカラー</p>
+                  <ColorPicker colors={TEXT_COLORS} selected={textColor} onSelect={setTextColor} />
+                </div>
+
+                {/* ふちカラー */}
+                {textOutline && (
+                  <div className="px-4 pt-3 pb-4">
+                    <p className="text-xs font-bold text-gray-500 mb-2.5">ふちカラー</p>
+                    <ColorPicker colors={TEXT_COLORS} selected={outlineColor} onSelect={setOutlineColor} />
+                  </div>
+                )}
+              </section>
+            )}
+
+            {/* A3 選択時：デザインゾーン用ロゴ */}
+            {selectedFront === 'A3' && (
+              <section className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                <div className="px-4 pt-4 pb-3 border-b border-gray-100">
+                  <p className="text-sm font-black text-gray-900">マイロゴ（A-3 デザインゾーン）</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">写真を読み込むとAIが2Dデザインに変換します</p>
+                </div>
+                <div className="px-4 py-4">
+                  <button onClick={() => fileRef.current?.click()}
+                    className="w-full flex items-center justify-center gap-2 py-4 border-2 border-dashed border-gray-200 rounded-xl text-sm font-bold text-gray-500 bg-white active:bg-gray-50 transition-colors">
+                    <ImagePlus size={18} className="text-gray-400" />写真を読み込む
+                  </button>
+                  <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleLogoFile} />
+                  {myLogoImage && (
+                    <div className="relative mt-3">
+                      <div className="w-full aspect-video bg-white rounded-xl overflow-hidden border border-gray-200 flex items-center justify-center p-3">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={myLogoImage} alt="マイロゴ" className="max-w-full max-h-full object-contain" />
+                      </div>
+                      <button onClick={() => setMyLogoImage(null)}
+                        className="absolute top-2 right-2 w-7 h-7 bg-black/60 text-white rounded-full flex items-center justify-center text-xs font-bold">✕</button>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
           </>
         )}
 
@@ -524,10 +813,16 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
                     code={opt.code}
                     label={opt.label}
                     isSelected={selectedBack === opt.id}
-                    onClick={() => setSelectedBack(opt.id)}
+                    onClick={() => { setSelectedBack(opt.id); if (opt.id !== 'none') setPreviewSide('back') }}
                     designUrl={designImageUrl}
                     bodyType={bodyType}
                     color={color}
+                    textValue={!effectiveUseBackLogo ? effectiveBackText || undefined : undefined}
+                    textZoneLogoUrl={effectiveUseBackLogo ? effectiveBackLogo : null}
+                    textFont={selectedFont}
+                    textColor={textColor}
+                    textOutline={textOutline}
+                    outlineColor={outlineColor}
                   />
                 ))}
               </div>
@@ -543,10 +838,16 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
                     code={opt.code}
                     label={opt.label}
                     isSelected={selectedBack === opt.id}
-                    onClick={() => setSelectedBack(selectedBack === opt.id ? 'none' : opt.id)}
+                    onClick={() => { const next = selectedBack === opt.id ? 'none' : opt.id; setSelectedBack(next); if (next !== 'none') setPreviewSide('back') }}
                     designUrl={designImageUrl}
                     bodyType={bodyType}
                     color={color}
+                    textValue={!effectiveUseBackLogo ? effectiveBackText || undefined : undefined}
+                    textZoneLogoUrl={effectiveUseBackLogo ? effectiveBackLogo : null}
+                    textFont={selectedFont}
+                    textColor={textColor}
+                    textOutline={textOutline}
+                    outlineColor={outlineColor}
                   />
                 ))}
               </div>
@@ -562,114 +863,176 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
                     code={opt.code}
                     label={opt.label}
                     isSelected={selectedBack === opt.id}
-                    onClick={() => setSelectedBack(selectedBack === opt.id ? 'none' : opt.id)}
+                    onClick={() => { const next = selectedBack === opt.id ? 'none' : opt.id; setSelectedBack(next); if (next !== 'none') setPreviewSide('back') }}
                     designUrl={designImageUrl}
                     bodyType={bodyType}
                     color={color}
+                    textValue={!effectiveUseBackLogo ? effectiveBackText || undefined : undefined}
+                    textZoneLogoUrl={effectiveUseBackLogo ? effectiveBackLogo : null}
+                    textFont={selectedFont}
+                    textColor={textColor}
+                    textOutline={textOutline}
+                    outlineColor={outlineColor}
                   />
                 ))}
               </div>
             </section>
+
+            {/* ── バック テキスト設定（テキストパターン選択時のみ）── */}
+            {showBackTextSection && (
+              <section className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                {/* ヘッダー + フロントと同じチェック */}
+                <div className="px-4 pt-4 pb-3 border-b border-gray-100 flex items-center justify-between gap-3">
+                  <p className="text-sm font-black text-gray-900">テキスト設定</p>
+                  <label className="flex items-center gap-1.5 text-xs font-bold text-gray-600 cursor-pointer shrink-0">
+                    <input type="checkbox" checked={backSameAsFront}
+                      onChange={e => setBackSameAsFront(e.target.checked)}
+                      className="w-4 h-4 rounded accent-black cursor-pointer" />
+                    フロントと同じ
+                  </label>
+                </div>
+
+                {/* テキスト入力 */}
+                <div className="px-4 pt-3 pb-3 border-b border-gray-100">
+                  <div className="relative">
+                    <textarea
+                      rows={effectiveBackText.includes('\n') ? 2 : 1}
+                      value={effectiveBackText}
+                      onChange={e => { if (!backSameAsFront) setTextBack(clampText(e.target.value)) }}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && effectiveBackText.split('\n').length >= 2) e.preventDefault()
+                      }}
+                      disabled={backSameAsFront || effectiveUseBackLogo}
+                      placeholder="テキストを入力（Enterで改行）"
+                      className={`w-full px-4 py-3 pr-14 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/10 transition-all resize-none leading-relaxed ${(backSameAsFront || effectiveUseBackLogo) ? 'opacity-40 cursor-not-allowed bg-gray-50' : ''}`}
+                    />
+                    <span className="absolute right-3.5 bottom-3.5 text-[10px] text-gray-400 tabular-nums leading-tight text-right pointer-events-none">
+                      {effectiveBackText.split('\n').map((l, i) => <span key={i} className="block">{l.length}/20</span>)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* マイロゴ チェックボックス + アップロード */}
+                <div className="px-4 pt-3 pb-3 border-b border-gray-100 space-y-3">
+                  <label className={`flex items-center gap-2.5 ${backSameAsFront ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
+                    <input
+                      type="checkbox"
+                      checked={effectiveUseBackLogo}
+                      onChange={e => { if (!backSameAsFront) setUseBackLogo(e.target.checked) }}
+                      disabled={backSameAsFront}
+                      className="w-4 h-4 rounded accent-black cursor-pointer"
+                    />
+                    <span className="text-xs font-bold text-gray-700">
+                      マイロゴ（テキストの代わりに使用）
+                    </span>
+                  </label>
+                  {effectiveUseBackLogo && (
+                    <>
+                      {!backSameAsFront ? (
+                        <>
+                          <button onClick={() => backLogoRef.current?.click()}
+                            disabled={removingBgBack}
+                            className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-200 rounded-xl text-sm font-bold text-gray-500 bg-white active:bg-gray-50 transition-colors disabled:opacity-50">
+                            <ImagePlus size={16} className="text-gray-400" />
+                            ロゴを読み込む（横長推奨）
+                          </button>
+                          <input ref={backLogoRef} type="file" accept="image/*" className="hidden"
+                            onChange={e => { const f = e.target.files?.[0]; if (f) removeBgAndSet(f, setLogoBack, setRemovingBgBack) }} />
+                          {removingBgBack && (
+                            <div className="flex items-center justify-center gap-2 py-3 text-xs text-gray-500">
+                              <Loader2 size={14} className="animate-spin" />
+                              背景を透過しています…
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <p className="text-xs text-gray-400 text-center py-1">フロントのロゴを使用</p>
+                      )}
+                      {effectiveBackLogo && !removingBgBack && (
+                        <div className="relative">
+                          <div className="w-full h-20 bg-gray-50 rounded-xl overflow-hidden border border-gray-200 flex items-center justify-center p-2">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={effectiveBackLogo} alt="マイロゴ" className="max-w-full max-h-full object-contain" />
+                          </div>
+                          {!backSameAsFront && (
+                            <button onClick={() => setLogoBack(null)}
+                              className="absolute top-1.5 right-1.5 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center text-[10px] font-bold">✕</button>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                {/* フォント */}
+                <div className="px-4 pt-3 pb-3 border-b border-gray-100">
+                  <p className="text-xs font-bold text-gray-500 mb-2.5">フォント</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {FONT_OPTIONS.map(f => (
+                      <button key={f.id} onClick={() => setSelectedFont(f.id)}
+                        className={`py-2.5 rounded-xl text-xs font-bold border-2 transition-all ${
+                          selectedFont === f.id ? 'border-black bg-black text-white' : 'border-gray-200 bg-white text-gray-600'
+                        }`}>{f.label}</button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 文字のふち */}
+                <div className="px-4 pt-3 pb-3 border-b border-gray-100">
+                  <p className="text-xs font-bold text-gray-500 mb-2.5">文字のふち</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[{ v: false, l: 'なし' }, { v: true, l: 'あり' }].map(o => (
+                      <button key={String(o.v)} onClick={() => setTextOutline(o.v)}
+                        className={`py-2.5 rounded-xl text-xs font-bold border-2 transition-all ${
+                          textOutline === o.v ? 'border-black bg-black text-white' : 'border-gray-200 bg-white text-gray-600'
+                        }`}>{o.l}</button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* テキストカラー */}
+                <div className={`px-4 pt-3 pb-3 ${textOutline ? 'border-b border-gray-100' : ''}`}>
+                  <p className="text-xs font-bold text-gray-500 mb-2.5">テキストカラー</p>
+                  <ColorPicker colors={TEXT_COLORS} selected={textColor} onSelect={setTextColor} />
+                </div>
+
+                {/* ふちカラー */}
+                {textOutline && (
+                  <div className="px-4 pt-3 pb-4">
+                    <p className="text-xs font-bold text-gray-500 mb-2.5">ふちカラー</p>
+                    <ColorPicker colors={TEXT_COLORS} selected={outlineColor} onSelect={setOutlineColor} />
+                  </div>
+                )}
+              </section>
+            )}
           </>
         )}
 
-        {/* テキスト設定 */}
-        {hasTextSetting && (
-          <section className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-            <div className="px-4 pt-4 pb-3 border-b border-gray-100">
-              <p className="text-sm font-black text-gray-900">テキスト設定</p>
-            </div>
-
-            <div className="px-4 pt-4 pb-4 border-b border-gray-100">
-              <div className="relative">
-                <input
-                  type="text"
-                  value={textValue}
-                  onChange={e => setTextValue(e.target.value.slice(0, 20))}
-                  placeholder="テキストを入力"
-                  className="w-full px-4 py-3 pr-14 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/10 transition-all"
-                />
-                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 tabular-nums">
-                  {textValue.length}/20
-                </span>
-              </div>
-            </div>
-
-            <div className="px-4 py-4 border-b border-gray-100">
-              <p className="text-xs font-bold text-gray-500 mb-3">フォント</p>
-              <div className="grid grid-cols-3 gap-2">
-                {FONT_OPTIONS.map(f => (
-                  <button key={f.id} onClick={() => setSelectedFont(f.id)}
-                    className={`py-2.5 rounded-xl text-xs font-bold border-2 transition-all ${
-                      selectedFont === f.id
-                        ? 'border-black bg-black text-white'
-                        : 'border-gray-200 bg-white text-gray-600'
-                    }`}>{f.label}</button>
-                ))}
-              </div>
-            </div>
-
-            <div className="px-4 py-4 border-b border-gray-100">
-              <p className="text-xs font-bold text-gray-500 mb-3">文字のふち</p>
-              <div className="grid grid-cols-2 gap-2">
-                {[{ v: false, l: 'なし' }, { v: true, l: 'あり' }].map(o => (
-                  <button key={String(o.v)} onClick={() => setTextOutline(o.v)}
-                    className={`py-2.5 rounded-xl text-xs font-bold border-2 transition-all ${
-                      textOutline === o.v
-                        ? 'border-black bg-black text-white'
-                        : 'border-gray-200 bg-white text-gray-600'
-                    }`}>{o.l}</button>
-                ))}
-              </div>
-            </div>
-
-            <div className={`px-4 py-4 ${textOutline ? 'border-b border-gray-100' : ''}`}>
-              <p className="text-xs font-bold text-gray-500 mb-3">テキストカラー</p>
-              <ColorPicker colors={TEXT_COLORS} selected={textColor} onSelect={setTextColor} />
-            </div>
-
-            {textOutline && (
-              <div className="px-4 py-4">
-                <p className="text-xs font-bold text-gray-500 mb-3">ふちカラー</p>
-                <ColorPicker colors={TEXT_COLORS} selected={outlineColor} onSelect={setOutlineColor} />
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* マイロゴ追加 */}
-        {hasTextSetting && (
-          <section className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-            <div className="px-4 pt-4 pb-3 border-b border-gray-100">
-              <p className="text-sm font-black text-gray-900">マイロゴ追加</p>
-              <p className="text-[11px] text-gray-400 mt-0.5">写真を読み込むとAIが2Dデザインに変換します</p>
-            </div>
-            <div className="px-4 py-4">
+        {/* フロント / バック タブ（コンテンツ最下部） */}
+        <div className="pt-2">
+          <div className="flex bg-white rounded-2xl p-1 border border-gray-200">
+            {(['front', 'back'] as const).map(tab => (
               <button
-                onClick={() => fileRef.current?.click()}
-                className="w-full flex items-center justify-center gap-2 py-4 border-2 border-dashed border-gray-200 rounded-xl text-sm font-bold text-gray-500 bg-white hover:bg-gray-100 transition-colors"
+                key={tab}
+                onClick={() => { setActiveTab(tab); setPreviewSide(tab) }}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                  activeTab === tab
+                    ? 'bg-black text-white shadow-sm'
+                    : 'text-gray-500'
+                }`}
               >
-                <ImagePlus size={18} className="text-gray-400" />
-                写真を読み込む
+                {tab === 'front' ? 'フロント' : 'バック'}
+                {tab === 'front' && selectedFront !== 'none' && (
+                  <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 bg-white/20 rounded-full text-[9px]">✓</span>
+                )}
+                {tab === 'back' && selectedBack !== 'none' && (
+                  <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 bg-white/20 rounded-full text-[9px]">✓</span>
+                )}
               </button>
-              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleLogoFile} />
-              {myLogoImage && (
-                <div className="relative mt-3">
-                  <div className="w-full aspect-square bg-white rounded-xl overflow-hidden border border-gray-200 flex items-center justify-center p-4">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={myLogoImage} alt="マイロゴ" className="w-full h-full object-contain" />
-                  </div>
-                  <button
-                    onClick={() => setMyLogoImage(null)}
-                    className="absolute top-2 right-2 w-7 h-7 bg-black/60 text-white rounded-full flex items-center justify-center text-xs font-bold"
-                  >
-                    ✕
-                  </button>
-                </div>
-              )}
-            </div>
-          </section>
-        )}
+            ))}
+          </div>
+        </div>
+
       </div>
 
       {/* 固定下部ボタン */}
