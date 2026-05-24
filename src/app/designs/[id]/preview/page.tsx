@@ -35,13 +35,6 @@ interface PlacementState {
 
 const TEXT_ONLY_PATTERNS = new Set(['AT1','AT2','AT3','CT1','BT1','BT2','BT3'])
 
-const BODY_TYPE_LABELS_SHORT: Record<string, string> = {
-  tshirt:      'Tシャツ',
-  long_sleeve: 'ロングスリーブ',
-  sweatshirt:  'スウェット',
-  hoodie:      'パーカー',
-}
-
 
 
 export default function PreviewPage({ params }: { params: Promise<{ id: string }> }) {
@@ -118,7 +111,7 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ design_id: id, body_type, color, size, placement, print_size }),
+        body: JSON.stringify({ design_id: id, body_type, color, size }),
       })
       if (!res.ok) throw new Error('checkout failed')
       const { url } = await res.json()
